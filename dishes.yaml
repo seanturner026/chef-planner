@@ -11,11 +11,7 @@
     },
   'Steak':
     {
-    0 : [16, 'steak it up']
-    },
-  'filet':
-    {
-    0 : [16, 'filet it now']
+    # added to showcase flow control for steps which occur simultaneously
+    0 : [16, 'Cook steak']
     }
-
 }
