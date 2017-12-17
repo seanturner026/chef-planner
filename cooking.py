@@ -1,57 +1,13 @@
 # TODO:
-#  1) Add functionality allowing instructions to be downloadable for future use
-#  2) Add try except statements so app is more user friendly
-#  3) Add functionality so that steps occuring at the same point in time are
-    # properly accounted for in final for loop --> SOLUTION: iterate through the
-    # point in time component of instructions_final, and count how many times
-    # each value appears. Then a matter of a simple if statement that accounts
-    # for points in time which require multiple actions
-#  4) Potentially make epochs a dictionary. Keys would be point in time, values
-    # would be the frequency of each point in time. This will affect the
-    # creation of instructions_final list
+#  1) Add functionality which asks User for yaml file name to allow User to have
+    # access to multiple meals
+#  2) Adjust output to be neater in that text always starts at the same
+    # position. e.g. Account for ints of different length. pprint()?
 
-# instantiating dict to hold dishes and corresponding steps + instructions
-dishes = {}
+import yaml
 
-# instantiate dish names list
-print('What are the name(s) of you dishes? e.g. Pasta, Salad')
-dish_names = input('> ').split(', ')
-
-# instantiate each dish as keys, with dict of instruction and duration as values
-for dish in dish_names:
-
-    # instantiate the number of states for the current dish
-    print('How many steps does {} have?'.format(dish))
-    step_count = int(input('> '))
-
-    # instantiate a list to hold a list of instruction + duration for each step
-    steps = []
-
-    # loop through steps and write each step's instruction + duration as a list
-    for step in range(step_count):
-
-        # define instruction for the current step
-        print('What is step {}?'.format(str(step + 1)))
-        description = input('> ')
-
-        # define duration for the current step
-        print('How many minutes does this step take?')
-        duration = int(input('> '))
-
-        # write duration + instruction for the current step as a list
-        steps.append([duration, description])
-
-    # instantiate a dictionary to hold the step number as keys, and a list of
-    # the step instruction and duration as values
-    d = {}
-
-    # loop through steps, and write the step number and step
-    # instruction and duration to d
-    for step, step_num in zip(steps, range(len(steps))):
-        d.update({step_num: step})
-
-    # update original dishes dict with current dish
-    dishes.update({dish: d})
+# load in instructions for all dishes to be prepared
+dishes = yaml.load(open('dishes.yaml'))
 
 # instantiate a list to hold the total duration required for each dish
 duration_list = []
@@ -143,46 +99,88 @@ for dish in dishes.keys():
         # extract points in time that require action to epochs list
         epochs.append(dishes[dish][step][2])
 
+
+
 # sort points in time in ascending order
 epochs = sorted(epochs)
 
-print()
+# create dictionary to keep track of point in time frequency
+epochs_d = {}
+
+# iterate through points in time
+for i, e in enumerate(epochs):
+
+    # flow control to see if a particular point in time already exists
+    if e in epochs_d.keys():
+
+        # increase point in time frequency by one
+        epochs_d.update({e : (epochs_d[e] + 1)})
+
+    else:
+
+        # create specific point in time as a dictionary key
+        epochs_d[e] = 1
+
+# instantiate container to hold step description text for steps which occur at
+# the same point in time
+instruction_temp = []
 
 # instantiate list to hold all step details in order
 instructions_final = []
 
 # iterate through ordered points in time
-for e in epochs:
+for i, e in enumerate(epochs_d.keys()):
 
-    # iterate through each list in instructions
-    for i in instructions:
+    # flow control for points in time associated with multiple actions
+    if epochs_d[e] > 1:
 
-        # flow control to select steps in order
-        if e == i[2]:
+        # iterate over instructions holding all step details
+        for instruction in instructions:
 
-            # write step lists to instructions_final in order of time
-            instructions_final.append(i)
+            # flow control to select steps in order
+            if e == instruction[2]:
 
-# debug use only
-# print()
-# print(epochs)
-# print(instructions_final)
+                # extract step description text for all associated actions
+                instruction_temp.append(instruction[1])
+
+                # instantiate variable to hold all step details. variable is
+                # overwritten because the only important information is point
+                # in time
+                step_temp = instruction
+
+        # append current step details to master step details list
+        instructions_final.append(step_temp)
+
+        # update step instruction to reflect all necessary actions
+        instructions_final[i][1] = (' AND ').join(instruction_temp)
+
+    # flow control for points in time associated with only one action
+    else:
+
+        # iterate through each list in instructions
+        for instruction in instructions:
+
+            # flow control to select steps in order
+            if e == instruction[2]:
+
+                # write step lists to instructions_final in order of time
+                instructions_final.append(instruction)
 
 # iterate through points in time
-for i, t in enumerate(epochs):
+for i, (t, p) in enumerate(zip(epochs, epochs_d.keys())):
 
     # iterate through ordered lists of details for all steps
     for instruction in instructions_final:
 
         # flow control to select list of details depending on point in time
-        if instruction[2] == t:
+        if instruction[2] == p:
 
             # flow control for first step (time zero)
             try:
 
                 # flow control for current step durations which exceeds the
                 # following point in time
-                if instruction[0] > epochs[i+1]:
+                if instruction[0] > epochs[i + 1]:
 
                     # print time until next step, and action to be taken
                     print('set timer for {} minutes --> {}'\
@@ -202,7 +200,5 @@ for i, t in enumerate(epochs):
             except IndexError:
                 print('set timer for {} minutes --> {}'\
                 .format(instruction[0], instruction[1]))
-
-        # else:
 
 print('\nEnjoy!\n')

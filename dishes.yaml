@@ -1,0 +1,21 @@
+{
+  'Pasta':
+    {
+      0 : [16, 'Boil pasta'],
+      1 : [3, 'Mix Pasta with Sauce']
+    },
+  'Salad':
+    {
+      0 : [12, 'Make dressing'],
+      1 : [4, 'Toss salad']
+    },
+  'Steak':
+    {
+    0 : [16, 'steak it up']
+    },
+  'filet':
+    {
+    0 : [16, 'filet it now']
+    }
+
+}
