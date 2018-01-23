@@ -1,8 +1,16 @@
+"""
+module docstring
+"""
+
 # TODO:
 #  1) Add functionality which asks User for yaml file name to allow User to have
     # access to multiple meals
 #  2) Adjust output to be neater in that text always starts at the same
     # position. e.g. Account for ints of different length. pprint()?
+#  3) Add persistent volume which records recepies for future use
+#  4) Add argparse functionality to all application to start by utilising recepies
+    # saved in persistent volume
+#  5) organise code with classes
 
 import yaml
 
@@ -186,8 +194,6 @@ for i, (t, p) in enumerate(zip(epochs, epochs_d.keys())):
                     print('set timer for {} minutes --> {}'\
                     .format(epochs[i+1], instruction[1]))
 
-                # elif instruction[0] == epochs[i+1]:
-
                 # flow control for all other durations
                 # instruction[0] < epochs[i+1]
                 else:
@@ -196,9 +202,8 @@ for i, (t, p) in enumerate(zip(epochs, epochs_d.keys())):
                     print('set timer for {} minutes --> {}'\
                     .format(epochs[i+1] - epochs[i], instruction[1]))
 
-            # flow control for the final step
+            # flow control for after the final step
             except IndexError:
-                print('set timer for {} minutes --> {}'\
-                .format(instruction[0], instruction[1]))
+                continue
 
 print('\nEnjoy!\n')
