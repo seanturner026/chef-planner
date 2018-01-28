@@ -6,13 +6,46 @@ module docstring
 #  1) Add functionality which asks User for yaml file name to allow User to have
     # access to multiple meals
 #  2) Adjust output to be neater in that text always starts at the same
-    # position. e.g. Account for ints of different length. pprint()?
+    # position. e.g. Account for ints of different length. --> if mins > 10: 
+    # print('xyz') vs print(' xyz')
 #  3) Add persistent volume which records recepies for future use
 #  4) Add argparse functionality to all application to start by utilising recepies
     # saved in persistent volume
-#  5) organise code with classes
+#  5) Add code to prevent print help, and reninstantiate sys.args when incorrect
+    # arg is provided
+#  6) How to handle database conflicts?
+#  7) Add code to instantiate a database if one doesn't exist?
 
 import yaml
+import argparse
+import sys
+import psycopg2
+
+parser = argparse.ArgumentParser(description='Chef planning assistant')
+
+parser.add_argument('-w', '--writer', action='store_false', default=False,
+                    help='write recipies to persistent database')
+
+parser.add_argument('-s', '--selector', action='store_false', default=False,
+                    help='select from existing recipies')
+
+# should -h ask for new arguments 
+if '-h' in sys.argv[1:]:
+    print(parser.parse_args())
+# need code to ask if an existing dish should be overwritten, OR, if the current
+# dish can be renamed
+# should renaming the dish rename it in the dish.yaml?
+elif '-w' in sys.argv[1:]:
+    try:    
+        print('Writing all dishes to database.')
+        conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
+        cur = conn.conect()
+    except:
+        print('Cannot connect to the database.')
+elif '-s' in sys.argv[1:]:
+    print('Select dishes to be prepared')
+    pass
+
 
 # load in instructions for all dishes to be prepared
 dishes = yaml.load(open('dishes.yaml'))
