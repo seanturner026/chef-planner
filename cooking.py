@@ -21,17 +21,6 @@ import argparse
 import sys
 import psycopg2
 
-parser = argparse.ArgumentParser(description='Chef planning assistant')
-
-parser.add_argument('-w', '--writer', action='store_false', default=False,
-                    help='write recipies to persistent database')
-
-parser.add_argument('-s', '--selector', action='store_false', default=False,
-                    help='select from existing recipies')
-
-# load in instructions for all dishes to be prepared
-dishes = yaml.load(open('dishes.yaml'))
-
 # database has columns dish, duration, and steps
 
 def get_durations(dishes):
@@ -249,26 +238,58 @@ def broadcast_instructions(epochs, epochs_d, instructions_final):
 
     print('\nEnjoy!\n')
 
+# top-level scripting environment
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description='Chef planning assistant')
+
+    parser.add_argument('-r', '--reader', action='store_false', default=False,
+                        help='reads and plans using recipies from dishes.yaml')
+
+    parser.add_argument('-w', '--writer', action='store_false', default=False,
+                        help='write recipies to persistent database')
+
+    parser.add_argument('-s', '--selector', action='store_false', default=False,
+                        help='select from existing recipies')
+
+    # load in instructions for all dishes to be prepared
+    dishes = yaml.load(open('dishes.yaml'))
+
     # should -h ask for new arguments 
     if '-h' in sys.argv[1:]:
         print(parser.parse_args())
     # need code to ask if an existing dish should be overwritten, OR, if the current
     # dish can be renamed
-    elif '-w' in sys.argv[1:]:
+    elif '-r' in sys.argv[1:]:
 
-        try:    
-            print('Writing all dishes to database.')
-            conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
-            cur = conn.cursor()
-            duration_list, max_duration, max_duration_idx = get_durations(dishes)
-            dishes = assign_time(dishes)
-            instructions, epochs, epochs_d = organise_steps(dishes)
-            instructions_final = parallel_timings(instructions, epochs_d, dishes)
-            broadcast_instructions(epochs, epochs_d, instructions_final)
+        print('Reading all dishes from dishes.yaml.')
+        duration_list, max_duration, max_duration_idx = get_durations(dishes)
+        dishes = assign_time(dishes)
+        instructions, epochs, epochs_d = organise_steps(dishes)
+        instructions_final = parallel_timings(instructions, epochs_d, dishes)
+        broadcast_instructions(epochs, epochs_d, instructions_final)
 
-        except psycopg2.OperationalError:
-            print('Cannot connect to the database.')
+    # elif '-w' in sys.argv[1:]:
+
+    #     try:
+    #         print('Writing all dishes to database.')
+    #         conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
+    #         cur = conn.cursor()
+    #         duration_list, max_duration, max_duration_idx = get_durations(dishes)
+    #         dishes = assign_time(dishes)
+    #         instructions, epochs, epochs_d = organise_steps(dishes)
+    #         instructions_final = parallel_timings(instructions, epochs_d, dishes)
+    #         broadcast_instructions(epochs, epochs_d, instructions_final)
+
+    #     except psycopg2.OperationalError:
+    #         print('Cannot connect to the database.')
 
     elif '-s' in sys.argv[1:]:
-        print('Select dishes to be prepared')
+
+        try:
+            print('Select dishes to be prepared:\n')
+            conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
+            cur = conn.cursor()
+        
+        except psycopg2.OperationalError:
+            print('Cannot connect to the database.')
