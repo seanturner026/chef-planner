@@ -8,13 +8,13 @@ module docstring
 #  2) Adjust output to be neater in that text always starts at the same
     # position. e.g. Account for ints of different length. --> if mins > 10: 
     # print('xyz') vs print(' xyz')
-#  3) Add persistent volume which records recepies for future use
-#  4) Add argparse functionality to all application to start by utilising recepies
+#  3) Add argparse functionality to all application to start by utilising recepies
     # saved in persistent volume
-#  5) Add code to prevent print help, and reninstantiate sys.args when incorrect
+#  4) Add code to prevent print help, and reninstantiate sys.args when incorrect
     # arg is provided
-#  6) How to handle database conflicts?
-#  7) Add code to instantiate a database if one doesn't exist?
+#  5) How to handle database conflicts?
+#  6) Add code to instantiate a database if one doesn't exist?
+#  7) Data visualisations?
 
 import yaml
 import argparse
@@ -26,6 +26,7 @@ import psycopg2
 def get_durations(dishes):
     """
     Generates a list which contains calculations of the total time required for each dish
+    :param duration_list
     """
     # instantiate a list to hold the total duration required for each dish
     duration_list = []
@@ -37,7 +38,8 @@ def get_durations(dishes):
 
         # calculating the total duration for the current dish
         for step in dishes[dish].keys():
-            total_duration += dishes[dish][step][0]
+            if type(step) == int:
+                total_duration += dishes[dish][step][0]
 
         # writing total duration for current dish to total_duration list
         duration_list.append(total_duration)
@@ -72,7 +74,7 @@ def assign_time(dishes):
                     dishes[k][step].append(0)
 
                 # flow control to select following steps
-                else:
+                elif type(step) == int:
 
                     # instantiate variable to hold current point in time after
                     # all preceeding steps have been executed
@@ -98,7 +100,7 @@ def assign_time(dishes):
                     dishes[k][step].append(start_val)
 
                 # flow control to select following steps
-                else:
+                elif type(step) == int:
 
                     # instantiate variable to hold current point in time after
                     # all preceeding steps have been executed
@@ -121,13 +123,15 @@ def organise_steps(dishes):
 
         # iterate through steps
         for step in dishes[dish].keys():
+            
+            if type(step) == int:
+                
+                # extract step details (duration, instruction, point in time) for
+                # current dish, and write to instrcutions list
+                instructions.append(dishes[dish][step])
 
-            # extract step details (duration, instruction, point in time) for
-            # current dish, and write to instrcutions list
-            instructions.append(dishes[dish][step])
-
-            # extract points in time that require action to epochs list
-            epochs.append(dishes[dish][step][2])
+                # extract points in time that require action to epochs list
+                epochs.append(dishes[dish][step][2])
 
     # sort points in time in ascending order
     epochs = sorted(epochs)
@@ -136,7 +140,7 @@ def organise_steps(dishes):
     epochs_d = {}
 
     # iterate through points in time
-    for i, e in enumerate(epochs):
+    for e in epochs:
 
         # flow control to see if a particular point in time already exists
         if e in epochs_d.keys():
@@ -205,7 +209,7 @@ def broadcast_instructions(epochs, epochs_d, instructions_final):
     Print timings for various dishes
     """
     # iterate through points in time
-    for i, (t, p) in enumerate(zip(epochs, epochs_d.keys())):
+    for i, p in enumerate(epochs_d.keys()):
 
         # iterate through ordered lists of details for all steps
         for instruction in instructions_final:
@@ -221,7 +225,7 @@ def broadcast_instructions(epochs, epochs_d, instructions_final):
                     if instruction[0] > epochs[i + 1]:
 
                         # print time until next step, and action to be taken
-                        print('set timer for {} minutes --> {}'\
+                        print('set timer for {:3} minutes » {}'\
                         .format(epochs[i+1], instruction[1]))
 
                     # flow control for all other durations
@@ -229,7 +233,7 @@ def broadcast_instructions(epochs, epochs_d, instructions_final):
                     else:
 
                         # print time until next step, and the action to be taken
-                        print('set timer for {} minutes --> {}'\
+                        print('set timer for {:3} minutes » {}'\
                         .format(epochs[i+1] - epochs[i], instruction[1]))
 
                 # flow control for after the final step
@@ -238,28 +242,68 @@ def broadcast_instructions(epochs, epochs_d, instructions_final):
 
     print('\nEnjoy!\n')
 
+def write_db_entry(dishes_d):
+    """
+    Flatten each entry in dishes.yaml, and enter into the database
+    """
+    # should these be function arguments?
+    conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
+    cur = conn.cursor()
+
+    for dish in dishes_d.keys():
+        current_dish = {}   
+        current_dish.update({'dish_name': dish})
+        dish_duration_list = []
+        dish_instructions_list = []
+        z = 0
+
+        for step in dishes[dish].keys():
+            if type(step) == int:
+                dish_duration_list.append(dishes[dish][step][0])
+                dish_instructions_list.append(dishes[dish][step][1])
+                z += dishes[dish][step][0]
+            else:
+                dish_description = dishes[dish][step]
+
+        current_dish.update({'duration': dish_duration_list})
+        current_dish.update({'total_duration': z})
+        current_dish.update({'instructions': dish_instructions_list})
+        current_dish.update({'description': dish_description})
+
+        cur.execute("""
+        INSERT INTO dishes (dish, duration, total_duration, instructions, description) 
+        VALUES(%(dish_name)s, %(duration)s, %(total_duration)s, %(instructions)s, %(description)s)
+        """, 
+        current_dish)
+        conn.commit()
+    
+    cur.close()
+    conn.close()
+
 # top-level scripting environment
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Chef planning assistant')
+
+    parser.add_argument('-s', '--selector', action='store_false', default=False,
+                        help='select from existing recipies')
 
     parser.add_argument('-r', '--reader', action='store_false', default=False,
                         help='reads and plans using recipies from dishes.yaml')
 
     parser.add_argument('-w', '--writer', action='store_false', default=False,
                         help='write recipies to persistent database')
-
-    parser.add_argument('-s', '--selector', action='store_false', default=False,
-                        help='select from existing recipies')
+    
+    parser.add_argument('-rw', '-read/writer', action='store_false', default=False,
+                        help='reads and plans using recipies from dishes.yaml,\
+                        and writes to persistent database')
 
     # load in instructions for all dishes to be prepared
     dishes = yaml.load(open('dishes.yaml'))
 
-    # should -h ask for new arguments 
     if '-h' in sys.argv[1:]:
         print(parser.parse_args())
-    # need code to ask if an existing dish should be overwritten, OR, if the current
-    # dish can be renamed
+        
     elif '-r' in sys.argv[1:]:
 
         print('Reading all dishes from dishes.yaml.')
@@ -269,21 +313,33 @@ if __name__ == "__main__":
         instructions_final = parallel_timings(instructions, epochs_d, dishes)
         broadcast_instructions(epochs, epochs_d, instructions_final)
 
-    # elif '-w' in sys.argv[1:]:
+# need code to ask if an existing dish should be overwritten, OR, if the current
+    # dish can be renamed
+    elif '-w' in sys.argv[1:]:
 
-    #     try:
-    #         print('Writing all dishes to database.')
-    #         conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
-    #         cur = conn.cursor()
-    #         duration_list, max_duration, max_duration_idx = get_durations(dishes)
-    #         dishes = assign_time(dishes)
-    #         instructions, epochs, epochs_d = organise_steps(dishes)
-    #         instructions_final = parallel_timings(instructions, epochs_d, dishes)
-    #         broadcast_instructions(epochs, epochs_d, instructions_final)
+        try:
+            print('Writing all dishes to database.')
+            write_db_entry(dishes)
+            print('Done')
 
-    #     except psycopg2.OperationalError:
-    #         print('Cannot connect to the database.')
+        except psycopg2.OperationalError:
+            print('Cannot connect to the database.')
 
+    elif '-rw' in sys.argv[1:]:
+        
+        try:
+            print('Writing all dishes to database and providing instruction.')
+            write_db_entry(dishes)
+
+            duration_list, max_duration, max_duration_idx = get_durations(dishes)
+            dishes = assign_time(dishes)
+            instructions, epochs, epochs_d = organise_steps(dishes)
+            instructions_final = parallel_timings(instructions, epochs_d, dishes)
+            broadcast_instructions(epochs, epochs_d, instructions_final)
+
+        except psycopg2.OperationalError:
+            print('Cannot connect to the database.')
+    
     elif '-s' in sys.argv[1:]:
 
         try:
