@@ -5,16 +5,12 @@ module docstring
 # TODO:
 #  1) Add functionality which asks User for yaml file name to allow User to have
     # access to multiple meals
-#  2) Adjust output to be neater in that text always starts at the same
-    # position. e.g. Account for ints of different length. --> if mins > 10: 
-    # print('xyz') vs print(' xyz')
-#  3) Add argparse functionality to all application to start by utilising recepies
+#  2) Add argparse functionality to all application to start by utilising recepies
     # saved in persistent volume
-#  4) Add code to prevent print help, and reninstantiate sys.args when incorrect
+#  3) Add code to prevent print help, and reninstantiate sys.args when incorrect
     # arg is provided
-#  5) How to handle database conflicts?
-#  6) Add code to instantiate a database if one doesn't exist?
-#  7) Data visualisations?
+#  4) How to handle database conflicts? Duplicate names? Multiple primary keys?
+#  5) Data visualisations?
 
 import yaml
 import argparse
@@ -313,7 +309,7 @@ if __name__ == "__main__":
         instructions_final = parallel_timings(instructions, epochs_d, dishes)
         broadcast_instructions(epochs, epochs_d, instructions_final)
 
-# need code to ask if an existing dish should be overwritten, OR, if the current
+    # need code to ask if an existing dish should be overwritten, OR, if the current
     # dish can be renamed
     elif '-w' in sys.argv[1:]:
 
