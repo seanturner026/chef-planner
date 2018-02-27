@@ -17,9 +17,9 @@ Cooking best practice involves planning such that all of your dishes finish at t
     },
   'Steak':
     {
-    # added to showcase flow control for steps which occur simultaneously
-    0 : [16, 'Cook steak'],
-    'description':null
+      # added to showcase flow control for steps which occur simultaneously
+      0 : [16, 'Cook steak'],
+      'description':null
     }
 }
 ```
