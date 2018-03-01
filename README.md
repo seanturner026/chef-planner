@@ -33,13 +33,13 @@ Chef planning assistant
 
 optional arguments:
   -h, --help         show this help message and exit
-  -f, --file         read and plan using recipies from a specific yaml file
-  -r, --reader       read and plan using recipies from dishes.yaml
-  -s, --selector     create cooking plan from existing recipies in persistent
-                     database
+  -f, --file         create cooking plan using a specified yaml file
+  -r, --reader       create cooking plan using dishes.yaml
+  -s, --selector     create cooking plan using recipies existing in the
+                     persistent database
   -w, --writer       write recipies from dishes.yaml to the persistent
                      database
-  -fw, -file writer  write recipies from a specific yaml file to the
+  -fw, -file writer  write recipies from a specified yaml file to the
                      persistent database
 ```
 ```
