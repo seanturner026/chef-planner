@@ -11,12 +11,14 @@ This planning has been automated using Python. The program goes through each dis
       1 : [3, 'Mix Pasta with Sauce'],
       'description':null
     },
+
   'Salad':
     {
       0 : [12, 'Make dressing'],
       1 : [4, 'Toss salad'],
       'description':null
     },
+    
   'Steak':
     {
       0 : [16, 'Cook steak'],
