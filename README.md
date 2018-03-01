@@ -1,4 +1,6 @@
-Cooking best practice involves planning such that all of your dishes finish at the same time. This is great because your food will be warm, and you have some time for washing up in otherwise idle moments. This planning has been automated using Python. The yaml file provides the program with dishes, and for each dish, how long each step requires in minutes, and the description of each step. The program then figures out at what points in time each step should be done.
+Cooking best practice involves planning such that all of your dishes finish at the same time. All of your food will be warm, and you have  time for washing up in otherwise idle moments. 
+
+This planning has been automated using Python. The program goes through each dish in the yaml file, reads how long each step requires in minutes, and determines at what points in time each step should be executed. Once all of the calculations are completed, the final instructions are printed to the console.
 
 ### Dishes.yaml
 ```
@@ -17,7 +19,6 @@ Cooking best practice involves planning such that all of your dishes finish at t
     },
   'Steak':
     {
-      # added to showcase flow control for steps which occur simultaneously
       0 : [16, 'Cook steak'],
       'description':null
     }
