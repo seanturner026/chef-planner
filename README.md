@@ -24,7 +24,7 @@ Cooking best practice involves planning such that all of your dishes finish at t
 }
 ```
 
-### Useage
+### Usage
 
 ```
 python cooking.py -h
