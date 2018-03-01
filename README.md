@@ -29,13 +29,18 @@ Cooking best practice involves planning such that all of your dishes finish at t
 ```
 python cooking.py -h
 
+Chef planning assistant
+
 optional arguments:
   -h, --help         show this help message and exit
-  -s, --selector     select from existing recipies from persistent database (not currently implemented)
-  -r, --reader       reads and plans using recipies from dishes.yaml
-  -w, --writer       write recipies to persistent database
-  -rw, -read/writer  reads and plans using recipies from dishes.yaml, and
-                     writes to persistent database
+  -f, --file         read and plan using recipies from a specific yaml file
+  -r, --reader       read and plan using recipies from dishes.yaml
+  -s, --selector     create cooking plan from existing recipies in persistent
+                     database
+  -w, --writer       write recipies from dishes.yaml to the persistent
+                     database
+  -fw, -file writer  write recipies from a specific yaml file to the
+                     persistent database
 ```
 ```
 python cooking.py -r

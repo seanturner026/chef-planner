@@ -1,23 +1,19 @@
 """
-module docstring
+cooking.py reads dishes.yaml, and prints out ordered instructions detailing when to 
+execute each step listed in dishes.yaml so that all dishes will be ready at the same
+point in time
 """
 
 # TODO:
-#  1) Add functionality which asks User for yaml file name to allow User to have
-    # access to multiple meals
-#  2) Add argparse functionality to all application to start by utilising recepies
+#  1) Add argparse functionality to all application to start by utilising recepies
     # saved in persistent volume
-#  3) Add code to prevent print help, and reninstantiate sys.args when incorrect
-    # arg is provided
-#  4) How to handle database conflicts? Duplicate names? Multiple primary keys?
-#  5) Data visualisations?
+#  2) How to handle database conflicts? Duplicate names? Multiple primary keys?
+#  3) Data visualisations?
 
 import yaml
 import argparse
 import sys
 import psycopg2
-
-# database has columns dish, duration, and steps
 
 def get_durations(dishes):
     """
@@ -281,26 +277,48 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Chef planning assistant')
 
-    parser.add_argument('-s', '--selector', action='store_false', default=False,
-                        help='select from existing recipies')
+    parser.add_argument('-f', '--file', action='store_false', default=False,
+                        help='read and plan using recipies from a specific \
+                        yaml file')
 
     parser.add_argument('-r', '--reader', action='store_false', default=False,
-                        help='reads and plans using recipies from dishes.yaml')
+                        help='read and plan using recipies from dishes.yaml')
+    
+    parser.add_argument('-s', '--selector', action='store_false', default=False,
+                        help='create cooking plan from existing recipies in \
+                        persistent database')
 
     parser.add_argument('-w', '--writer', action='store_false', default=False,
-                        help='write recipies to persistent database')
+                        help='write recipies from dishes.yaml to the \
+                        persistent database')
     
-    parser.add_argument('-rw', '-read/writer', action='store_false', default=False,
-                        help='reads and plans using recipies from dishes.yaml,\
-                        and writes to persistent database')
-
-    # load in instructions for all dishes to be prepared
-    dishes = yaml.load(open('dishes.yaml'))
+    parser.add_argument('-fw', '-file writer', action='store_false', default=False,
+                        help='write recipies from a specific yaml file to the \
+                        persistent database')
 
     if '-h' in sys.argv[1:]:
         print(parser.parse_args())
+
+    elif '-f' in sys.argv[1:]:
+
+        if len(sys.argv) < 3:
+            
+            print('Please specify a file after the \'-f\' flag')
+
+        else:
+
+            dishes = yaml.load(open(sys.argv[2]))
+
+            print('Reading all dishes from {}'.format(sys.argv[2])) 
+            duration_list, max_duration, max_duration_idx = get_durations(dishes)
+            dishes = assign_time(dishes)
+            instructions, epochs, epochs_d = organise_steps(dishes)
+            instructions_final = parallel_timings(instructions, epochs_d, dishes)
+            broadcast_instructions(epochs, epochs_d, instructions_final)
         
     elif '-r' in sys.argv[1:]:
+
+        dishes = yaml.load(open('dishes.yaml'))
 
         print('Reading all dishes from dishes.yaml.')
         duration_list, max_duration, max_duration_idx = get_durations(dishes)
@@ -321,20 +339,30 @@ if __name__ == "__main__":
         except psycopg2.OperationalError:
             print('Cannot connect to the database.')
 
-    elif '-rw' in sys.argv[1:]:
+    elif '-fw' in sys.argv[1:]:
         
-        try:
-            print('Writing all dishes to database and providing instruction.')
-            write_db_entry(dishes)
+        if len(sys.argv) < 3:
+            
+            print('Please specify a file after the \'-fw\' flag')
+        
+        else:
+            
+            dishes = yaml.load(open(sys.argv[2]))
 
-            duration_list, max_duration, max_duration_idx = get_durations(dishes)
-            dishes = assign_time(dishes)
-            instructions, epochs, epochs_d = organise_steps(dishes)
-            instructions_final = parallel_timings(instructions, epochs_d, dishes)
-            broadcast_instructions(epochs, epochs_d, instructions_final)
+            try:
 
-        except psycopg2.OperationalError:
-            print('Cannot connect to the database.')
+                print('Writing all dishes to database and providing instruction.')
+                write_db_entry(dishes)
+
+                duration_list, max_duration, max_duration_idx = get_durations(dishes)
+                dishes = assign_time(dishes)
+                instructions, epochs, epochs_d = organise_steps(dishes)
+                instructions_final = parallel_timings(instructions, epochs_d, dishes)
+                broadcast_instructions(epochs, epochs_d, instructions_final)
+
+            except psycopg2.OperationalError:
+
+                print('Cannot connect to the database.')
     
     elif '-s' in sys.argv[1:]:
 
