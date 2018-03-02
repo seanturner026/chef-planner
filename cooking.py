@@ -5,10 +5,10 @@ point in time
 """
 
 # TODO:
-#  1) Add argparse functionality to all application to start by utilising recepies
-    # saved in persistent volume
-#  2) How to handle database conflicts? Duplicate names? Multiple primary keys?
-#  3) Data visualisations?
+
+#  1) How to handle database conflicts? Duplicate names? Multiple primary keys?
+#  2) Data visualisations? -- time on x-axis depicting frequency of actions
+#  3) Create class to hold all functions
 
 import yaml
 import argparse
@@ -38,9 +38,9 @@ def get_durations(dishes):
         # instantiating max duration variable
         max_duration = max(durations)
 
-        # instantiating index of max duration in durations
-        # serves to identify which dish requires the most time
-        max_duration_idx = durations.index(max_duration)
+        # instantiating index of max duration in durations as a list
+        # serves to identify which dish(es) requires the most time
+        max_duration_idx = [i for i, v in enumerate(durations) if v == max_duration]
 
     return durations, max_duration, max_duration_idx
 
@@ -52,8 +52,8 @@ def assign_time(dishes):
     # iterate through dishes
     for i, k in enumerate(dishes.keys()):
 
-        # flow control to select the dish requiring the most time
-        if i == max_duration_idx:
+        # flow control to select the dish(es) requiring the most time
+        if i in max_duration_idx:
 
             # iterate through steps for the current dish
             for j, step in enumerate(dishes[k].keys()):
@@ -69,7 +69,7 @@ def assign_time(dishes):
 
                     # instantiate variable to hold current point in time after
                     # all preceeding steps have been executed
-                    start = dishes[k][step - 1][0] + dishes[k][step - 1][2]
+                    start = dishes[k][step - 1][0] + dishes[k][step-1][2]
 
                     # write current point in time to current step for current dish
                     dishes[k][step].append(start)
@@ -85,7 +85,7 @@ def assign_time(dishes):
 
                     # instantiate variable to hold point in time when the dish
                     # should be started
-                    start = durations[max_duration_idx] - durations[i]
+                    start = durations[max_duration_idx[0]] - durations[i]
 
                     # write time to the list for step zero for the current dish
                     dishes[k][step].append(start)
@@ -95,7 +95,7 @@ def assign_time(dishes):
 
                     # instantiate variable to hold current point in time after
                     # all preceeding steps have been executed
-                    start = dishes[k][step - 1][0] + dishes[k][step - 1][2]
+                    start = dishes[k][step - 1][0] + dishes[k][step-1][2]
 
                     # write current point in time to current step for current dish
                     dishes[k][step].append(start)
@@ -137,7 +137,7 @@ def organise_steps(dishes):
         if e in epochs_d.keys():
 
             # increase point in time frequency by one
-            epochs_d.update({e : (epochs_d[e] + 1)})
+            epochs_d.update({e : (epochs_d[e]+1)})
 
         else:
 
@@ -195,13 +195,22 @@ def concurrency(instructions, epochs_d, dishes):
 
                     # write step lists to instructions_ordered in order of time
                     instructions_ordered.append(instruction)
-                    
+
     return instructions_ordered
 
 def broadcast_instructions(epochs, epochs_d, instructions_ordered):
     """
     Print timings for various dishes
     """
+
+    # instantiate variable to aid flow control so that proper timing instructions
+    # are provided when multiple dishes are started at time zero
+    z = 0
+    for i in range(len(epochs)):
+        if epochs[i] != 0:
+            z = i
+            break
+
     # iterate through points in time
     for i, p in enumerate(epochs_d.keys()):
 
@@ -213,22 +222,42 @@ def broadcast_instructions(epochs, epochs_d, instructions_ordered):
 
                 # flow control for first step (time zero)
                 try:
+                    
+                    # flow control for concurrent first steps
+                    if epochs[i+1] == 0:
+                        
+                        # flow control for current step durations which exceeds the
+                        # following point in time
+                        if instruction[0] > epochs[z]:
 
-                    # flow control for current step durations which exceeds the
-                    # following point in time
-                    if instruction[0] > epochs[i + 1]:
+                            # print time until next step, and action to be taken
+                            print('set timer for {:3} minutes » {}'\
+                            .format(epochs[z], instruction[1]))
 
-                        # print time until next step, and action to be taken
-                        print('set timer for {:3} minutes » {}'\
-                        .format(epochs[i+1], instruction[1]))
+                        # flow control for all other durations
+                        # instruction[0] < epochs[i+1]
+                        else:
 
-                    # flow control for all other durations
-                    # instruction[0] < epochs[i+1]
+                            # print time until next step, and the action to be taken
+                            print('set timer for {:3} minutes » {}'\
+                            .format(epochs[i+1] - epochs[i], instruction[1]))
+
                     else:
+                        # flow control for current step durations which exceeds the
+                        # following point in time
+                        if instruction[0] > epochs[i+1]:
 
-                        # print time until next step, and the action to be taken
-                        print('set timer for {:3} minutes » {}'\
-                        .format(epochs[i+1] - epochs[i], instruction[1]))
+                            # print time until next step, and action to be taken
+                            print('set timer for {:3} minutes » {}'\
+                            .format(epochs[i+1], instruction[1]))
+
+                        # flow control for all other durations
+                        # instruction[0] < epochs[i+1]
+                        else:
+
+                            # print time until next step, and the action to be taken
+                            print('set timer for {:3} minutes » {}'\
+                            .format(epochs[i+1] - epochs[i], instruction[1]))
 
                 # flow control for after the final step
                 except IndexError:
@@ -272,6 +301,22 @@ def write_db_entries(dishes_d):
     
     cur.close()
     conn.close()
+
+def read_db_entries(dishes):
+    """
+    Combine all tuples produced by database query back into format resembling dishes.yaml
+    """
+    d_dict = {}
+    for entry in dishes:
+        d_dict.update({entry[0]: {}})
+        
+        for i, _ in enumerate(entry[3]):
+            d_dict[entry[0]].update({i: []})
+            d_dict[entry[0]][i].append(entry[2][i])
+            d_dict[entry[0]][i].append(entry[3][i])
+        d_dict[entry[0]].update({'description': entry[4]})
+
+    return d_dict
 
 # top-level scripting environment
 if __name__ == "__main__":
@@ -330,6 +375,8 @@ if __name__ == "__main__":
     # need code to ask if an existing dish should be overwritten, OR, if the current
     # dish can be renamed
     elif '-w' in sys.argv[1:]:
+        
+        dishes = yaml.load(open('dishes.yaml'))
 
         try:
             print('Writing all dishes to database.')
@@ -370,6 +417,33 @@ if __name__ == "__main__":
             print('Select dishes to be prepared:\n')
             conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
             cur = conn.cursor()
-        
+
+            db = {}
+            cur.execute("SELECT * FROM dishes;")
+            for i, dish in enumerate(cur.fetchall()):
+                db.update({i:dish})
+                print('{:2}'.format(i), db[i][1])
+            
+            conn.close()
+            print()
+            
+            selection = input('Please provide the numbers of the dishes you would like to prepare, separated by spaces\n» ').split()
+            selection = [int(num) for num in selection]
+            
+            for i, j in enumerate(selection):
+                if i in db.keys():
+                    selection[i] = db[j][1:]
+                    # converting tuple structure to list
+                    selection[i] = [item for item in selection[i]]
+
+            print('Preparing {}'.format((', ').join([dish[0] for dish in selection])))
+
+            selection = read_db_entries(selection)
+            durations, max_duration, max_duration_idx = get_durations(selection)
+            dishes = assign_time(selection)
+            instructions, epochs, epochs_d = organise_steps(selection)
+            instructions_ordered = concurrency(instructions, epochs_d, selection)
+            broadcast_instructions(epochs, epochs_d, instructions_ordered)
+
         except psycopg2.OperationalError:
             print('Cannot connect to the database.')
