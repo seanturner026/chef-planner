@@ -306,17 +306,17 @@ def read_db_entries(dishes):
     """
     Combine all tuples produced by database query back into format resembling dishes.yaml
     """
-    d_dict = {}
+    dishes_dict = {}
     for entry in dishes:
-        d_dict.update({entry[0]: {}})
+        dishes_dict.update({entry[0]: {}})
         
         for i, _ in enumerate(entry[3]):
-            d_dict[entry[0]].update({i: []})
-            d_dict[entry[0]][i].append(entry[2][i])
-            d_dict[entry[0]][i].append(entry[3][i])
-        d_dict[entry[0]].update({'description': entry[4]})
+            dishes_dict[entry[0]].update({i: []})
+            dishes_dict[entry[0]][i].append(entry[2][i])
+            dishes_dict[entry[0]][i].append(entry[3][i])
+        dishes_dict[entry[0]].update({'description': entry[4]})
 
-    return d_dict
+    return dishes_dict
 
 # top-level scripting environment
 if __name__ == "__main__":
