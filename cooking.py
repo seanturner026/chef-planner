@@ -9,6 +9,7 @@ point in time
 #  1) How to handle database conflicts? Duplicate names? Multiple primary keys?
 #  2) Data visualisations? -- time on x-axis depicting frequency of actions
 #  3) Create class to hold all functions
+#  4) Dockerise application
 
 import yaml
 import argparse
@@ -231,7 +232,7 @@ def broadcast_instructions(epochs, epochs_d, instructions_ordered):
                         if instruction[0] > epochs[z]:
 
                             # print time until next step, and action to be taken
-                            print('set timer for {:3} minutes » {}'\
+                            print('set timer for {:3} minutes » {}' \
                             .format(epochs[z], instruction[1]))
 
                         # flow control for all other durations
@@ -239,7 +240,7 @@ def broadcast_instructions(epochs, epochs_d, instructions_ordered):
                         else:
 
                             # print time until next step, and the action to be taken
-                            print('set timer for {:3} minutes » {}'\
+                            print('set timer for {:3} minutes » {}' \
                             .format(epochs[i+1] - epochs[i], instruction[1]))
 
                     else:
@@ -354,8 +355,9 @@ if __name__ == "__main__":
 
             dishes = yaml.load(open(sys.argv[2]))
 
-            print('Reading all dishes from {}'.format(sys.argv[2])) 
             durations, max_duration, max_duration_idx = get_durations(dishes)
+            print('Reading all dishes from {}. Your meal will require {} minutes to prepare' \
+                .format(sys.argv[2], max_duration))
             dishes = assign_time(dishes)
             instructions, epochs, epochs_d = organise_steps(dishes)
             instructions_ordered = concurrency(instructions, epochs_d, dishes)
@@ -365,8 +367,9 @@ if __name__ == "__main__":
 
         dishes = yaml.load(open('dishes.yaml'))
 
-        print('Reading all dishes from dishes.yaml.')
         durations, max_duration, max_duration_idx = get_durations(dishes)
+        print('Reading all dishes from dishes.yaml. Your meal will require {} minutes to prepare' \
+            .format(max_duration))
         dishes = assign_time(dishes)
         instructions, epochs, epochs_d = organise_steps(dishes)
         instructions_ordered = concurrency(instructions, epochs_d, dishes)
@@ -398,14 +401,8 @@ if __name__ == "__main__":
 
             try:
 
-                print('Writing all dishes to database and providing instruction.')
+                print('Writing all dishes from {} to database.'.format(sys.argv[2]))
                 write_db_entries(dishes)
-
-                durations, max_duration, max_duration_idx = get_durations(dishes)
-                dishes = assign_time(dishes)
-                instructions, epochs, epochs_d = organise_steps(dishes)
-                instructions_ordered = concurrency(instructions, epochs_d, dishes)
-                broadcast_instructions(epochs, epochs_d, instructions_ordered)
 
             except psycopg2.OperationalError:
 
@@ -436,10 +433,10 @@ if __name__ == "__main__":
                     # converting tuple structure to list
                     selection[i] = [item for item in selection[i]]
 
-            print('Preparing {}'.format((', ').join([dish[0] for dish in selection])))
-
             selection = read_db_entries(selection)
             durations, max_duration, max_duration_idx = get_durations(selection)
+            print('Preparing {}. Your meal will require {} minutes to prepare' \
+                .format((', ').join([dish for dish in selection.keys()]), max_duration))
             dishes = assign_time(selection)
             instructions, epochs, epochs_d = organise_steps(selection)
             instructions_ordered = concurrency(instructions, epochs_d, selection)
