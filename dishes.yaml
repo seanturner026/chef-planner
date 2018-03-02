@@ -7,13 +7,13 @@
     },
   'Salad':
     {
-      0 : [12, 'Make dressing'],
+      0 : [15, 'Make dressing'],
       1 : [4, 'Toss salad'],
       'description':null
     },
   'Steak':
     {
-    0 : [16, 'Cook steak'],
-    'description':null
+      0 : [16, 'Cook steak'],
+      'description':null
     }
 }
