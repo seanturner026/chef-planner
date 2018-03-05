@@ -18,7 +18,7 @@ This planning has been automated using Python. The program goes through each dis
       1 : [4, 'Toss salad'],
       'description':null
     },
-    
+
   'Steak':
     {
       0 : [16, 'Cook steak'],
@@ -47,12 +47,40 @@ optional arguments:
 ```
 ```
 python cooking.py -r
-
-Reading all dishes from dishes.yaml.
+Reading all dishes from dishes.yaml. Your meal will require 19 minutes to prepare
 set timer for   3 minutes » Boil pasta
-set timer for   3 minutes » Make dressing AND Cook steak
-set timer for  12 minutes » Toss salad
-set timer for   1 minutes » Mix Pasta with Sauce
+set timer for  12 minutes » Make dressing AND Cook steak
+set timer for   1 minutes » Toss salad
+set timer for   3 minutes » Mix Pasta with Sauce
+
+Enjoy!
+```
+```
+python cooking.py -w
+Writing all dishes from dishes.yaml to the database...
+Wrote Pasta to the database
+Wrote Salad to the database
+Wrote Steak to the database
+
+Done!
+```
+```
+python cooking.py -s
+Select dishes to be prepared:
+
+Id Dish Name
+ 0 Pasta
+ 1 Salad
+ 2 Steak
+
+Please provide the numbers of the dishes you would like to prepare, separated by spaces
+» 0 1 2
+
+Preparing Pasta, Salad, Steak. Your meal will require 19 minutes to prepare
+set timer for   3 minutes » Boil pasta
+set timer for  12 minutes » Make dressing AND Cook steak
+set timer for   1 minutes » Toss salad
+set timer for   3 minutes » Mix Pasta with Sauce
 
 Enjoy!
 ```
