@@ -1,7 +1,7 @@
 """
-cooking.py reads dishes.yaml, and prints out ordered instructions detailing when to 
-execute each step listed in dishes.yaml so that all dishes will be ready at the same
-point in time
+cooking.py reads dishes from a yaml file or database, and prints out ordered instructions 
+detailing when to execute each step listed in dishes.yaml so that all dishes will be ready 
+at the same point in time
 """
 
 # TODO:
@@ -10,11 +10,14 @@ point in time
 #  2) Create class to hold all functions
 #  3) Dockerise application? -- how to handle databases?
 #  4) Front end
+#  5) How to account for the time needed to boil water and also preheating oven? -- 
+#     key in dishes.yaml that specifies that the oven is needed or that water needs to be boiled?
 
 import yaml
 import argparse
 import sys
 import psycopg2
+# import termplot
 
 def get_durations(dishes):
     """
@@ -41,7 +44,7 @@ def get_durations(dishes):
 
         # instantiating index of max duration in durations as a list
         # serves to identify which dish(es) requires the most time
-        max_duration_idx = [i for i, v in enumerate(durations) if v == max_duration]
+        max_duration_idx = [i for i, v in enumerate(durations) if v == max_duration][0]
 
     return durations, max_duration, max_duration_idx
 
@@ -54,7 +57,7 @@ def assign_time(dishes):
     for i, k in enumerate(dishes.keys()):
 
         # flow control to select the dish(es) requiring the most time
-        if i in max_duration_idx:
+        if i == max_duration_idx:
 
             # iterate through steps for the current dish
             for j, step in enumerate(dishes[k].keys()):
@@ -86,7 +89,7 @@ def assign_time(dishes):
 
                     # instantiate variable to hold point in time when the dish
                     # should be started
-                    start = durations[max_duration_idx[0]] - durations[i]
+                    start = durations[max_duration_idx] - durations[i]
 
                     # write time to the list for step zero for the current dish
                     dishes[k][step].append(start)
@@ -211,7 +214,7 @@ def broadcast_instructions(epochs, epochs_d, instructions_ordered):
     """
 
     # iterate through points in time
-    for i, p in enumerate(epochs_d.keys()):
+    for p in epochs_d.keys():
 
         # iterate through ordered lists of details for all steps
         for instruction in instructions_ordered:
@@ -369,6 +372,20 @@ if __name__ == "__main__":
         instructions, epochs, epochs_d = organise_steps(dishes)
         instructions_ordered = concurrency(instructions, epochs_d, dishes)
         broadcast_instructions(epochs, epochs_d, instructions_ordered)
+        # l = []
+        # for i in range(max(epochs_d.keys())):
+        #     if i in epochs_d.keys():
+        #         l.append(epochs_d[i])
+        #     else:
+        #         l.append(0)
+        
+        # termplot.plot(l)
+        # for i, item in enumerate(l):
+        #     if l[i] == 0:
+        #         l[i] = ' '
+        #     else:
+        #         l[i] = str(i)
+        # print(('').join(l))
 
     # need code to ask if an existing dish should be overwritten, OR, if the current
     # dish can be renamed
@@ -413,7 +430,7 @@ if __name__ == "__main__":
             print('Id Dish Name')
             db = fetch_db()
             
-            selection = input('\nPlease provide the numbers of the dishes you would like to prepare, separated by spaces\n» ').split()
+            selection = input('\nPlease provide the id numbers of the dishes you would like to prepare, separated by spaces\n» ').split()
             selection = [int(num) for num in selection]
             
             for i, j in enumerate(selection):
