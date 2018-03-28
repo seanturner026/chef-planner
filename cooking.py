@@ -17,7 +17,6 @@ import yaml
 import argparse
 import sys
 import psycopg2
-# import termplot
 
 def get_durations(dishes):
     """
@@ -314,7 +313,7 @@ def read_db_entries(dishes):
             dishes_dict[entry[0]][i].append(entry[2][i])
             dishes_dict[entry[0]][i].append(entry[3][i])
         dishes_dict[entry[0]].update({'description': entry[4]})
-
+    
     return dishes_dict
 
 # top-level scripting environment
@@ -372,20 +371,6 @@ if __name__ == "__main__":
         instructions, epochs, epochs_d = organise_steps(dishes)
         instructions_ordered = concurrency(instructions, epochs_d, dishes)
         broadcast_instructions(epochs, epochs_d, instructions_ordered)
-        # l = []
-        # for i in range(max(epochs_d.keys())):
-        #     if i in epochs_d.keys():
-        #         l.append(epochs_d[i])
-        #     else:
-        #         l.append(0)
-        
-        # termplot.plot(l)
-        # for i, item in enumerate(l):
-        #     if l[i] == 0:
-        #         l[i] = ' '
-        #     else:
-        #         l[i] = str(i)
-        # print(('').join(l))
 
     # need code to ask if an existing dish should be overwritten, OR, if the current
     # dish can be renamed
@@ -430,7 +415,7 @@ if __name__ == "__main__":
             print('Id Dish Name')
             db = fetch_db()
             
-            selection = input('\nPlease provide the id numbers of the dishes you would like to prepare, separated by spaces\n» ').split()
+            selection = input('\nPlease provide the id numbers of the dishes you would like to prepare, separated by spaces.\n» ').split()
             selection = [int(num) for num in selection]
             
             for i, j in enumerate(selection):
@@ -441,7 +426,7 @@ if __name__ == "__main__":
 
             selection = read_db_entries(selection)
             durations, max_duration, max_duration_idx = get_durations(selection)
-            print('\nPreparing {}. Your meal will require {} minutes to prepare' \
+            print('\nPreparing {}. Your meal will require {} minutes to prepare.' \
                 .format((', ').join([dish for dish in selection.keys()]), max_duration))
             dishes = assign_time(selection)
             instructions, epochs, epochs_d = organise_steps(selection)
