@@ -85,18 +85,17 @@ Id Dish Name
  2 Steak
 
 Please provide the id numbers of the dishes you would like to prepare, separated by spaces.
-» 0 1
+» 0 2
 
-Preparing Pasta, Salad. Your meal will require 19 minutes to prepare.
+Preparing Pasta, Steak. Your meal will require 19 minutes to prepare.
 
 Pasta requires the following ingredients (no serving information provided):
 * 16 oz noodles
 * 1 jar sauce
-Salad serves 3 (ingredients not provided)
+Steak (no servings or ingredients provided)
 
 set timer for   3 minutes » Boil noodles
-set timer for  12 minutes » Make dressing
-set timer for   1 minutes » Toss salad
+set timer for  13 minutes » Cook steak
 set timer for   3 minutes » Mix noodles with sauce
 
 Enjoy!
