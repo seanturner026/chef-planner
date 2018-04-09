@@ -7,22 +7,26 @@ This planning has been automated using Python. The program goes through each dis
 {
   'Pasta':
     {
-      0 : [16, 'Boil pasta'],
-      1 : [3, 'Mix Pasta with Sauce'],
-      'description':null
+      0 : [16, 'Boil noodles'],
+      1 : [3, 'Mix noodles with sauce'],
+      'description': 'delish pasta',
+      'ingredients':['16 oz noodles', '1 jar pesto'],
+      'servings':null
     },
-
   'Salad':
     {
       0 : [12, 'Make dressing'],
       1 : [4, 'Toss salad'],
-      'description':null
+      'description':null,
+      'ingredients':null,
+      'servings':3
     },
-
   'Steak':
     {
       0 : [16, 'Cook steak'],
-      'description':null
+      'description':null,
+      'ingredients':null,
+      'servings':null
     }
 }
 ```
@@ -47,11 +51,18 @@ optional arguments:
 ```
 ```
 python cooking.py -r
-Reading all dishes from dishes.yaml. Your meal will require 19 minutes to prepare
-set timer for   3 minutes » Boil pasta
+Reading all dishes from dishes.yaml. Your meal will require 19 minutes to prepare.
+
+Pasta requires the following ingredients (no serving information provided):
+* 16 oz noodles
+* 1 jar pesto
+Salad serves 3 (ingredients not provided)
+Steak (no servings or ingredients provided)
+
+set timer for   3 minutes » Boil noodles
 set timer for  12 minutes » Make dressing AND Cook steak
 set timer for   1 minutes » Toss salad
-set timer for   3 minutes » Mix Pasta with Sauce
+set timer for   3 minutes » Mix noodles with sauce
 
 Enjoy!
 ```
@@ -73,14 +84,20 @@ Id Dish Name
  1 Salad
  2 Steak
 
-Please provide the numbers of the dishes you would like to prepare, separated by spaces
-» 0 1 2
+Please provide the id numbers of the dishes you would like to prepare, separated by spaces.
+» 0 1
 
-Preparing Pasta, Salad, Steak. Your meal will require 19 minutes to prepare
-set timer for   3 minutes » Boil pasta
-set timer for  12 minutes » Make dressing AND Cook steak
+Preparing Pasta, Salad. Your meal will require 19 minutes to prepare.
+
+Pasta requires the following ingredients (no serving information provided):
+* 16 oz noodles
+* 1 jar sauce
+Salad serves 3 (ingredients not provided)
+
+set timer for   3 minutes » Boil noodles
+set timer for  12 minutes » Make dressing
 set timer for   1 minutes » Toss salad
-set timer for   3 minutes » Mix Pasta with Sauce
+set timer for   3 minutes » Mix noodles with sauce
 
 Enjoy!
 ```
