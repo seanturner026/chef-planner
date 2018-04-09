@@ -10,6 +10,8 @@ CREATE TABLE public.dishes
     duration integer[],
     instructions text[] COLLATE pg_catalog."default",
     description text COLLATE pg_catalog."default",
+    servings integer,
+    ingredients text[] COLLATE pg_catalog."default",
     CONSTRAINT dishes_pkey PRIMARY KEY (id)
 )
 WITH (
