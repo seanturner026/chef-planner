@@ -8,10 +8,11 @@ at the same point in time
 
 #  1) Data visualisations? -- time on x-axis depicting frequency of actions. termplot from github?
 #  2) Create class to hold all functions
-#  3) Dockerise application? -- how to handle databases?
-#  4) Front end
-#  5) How to account for the time needed to boil water and also preheating oven? -- 
+#  3) Flask + front end
+#  4) How to account for the time needed to boil water and also preheating oven? -- 
 #     key in dishes.yaml that specifies that the oven is needed or that water needs to be boiled?
+#  5) ask for how long it will take the user's oven to preheat to x temperature, or how long it will take 
+#     to boil water. Where to store these values for future use? in a second database?
 
 import yaml
 import argparse
@@ -207,6 +208,41 @@ def concurrency(instructions, epochs_d, dishes):
 
     return instructions_ordered
 
+def broadcast_details(dishes):
+    """
+    Print the ingredients and servings required to produce the various dishes
+    """
+    
+    dish_details = {}
+    for dish in dishes.keys():
+        dish_details.update({dish:{}})
+        for k in dishes[dish].keys():
+            if k == 'ingredients':
+                dish_details[dish].update({'ingredients':dishes[dish][k]})
+            elif k == 'servings':
+                dish_details[dish].update({'servings':dishes[dish][k]})
+
+    for dish in dish_details.keys():
+        if dish_details[dish]['ingredients'] == None:
+            if dish_details[dish]['servings'] == None:
+                print('{} (no servings or ingredients provided)'\
+                .format(dish))
+            else:
+                print('{} serves {} (ingredients not provided)'\
+                .format(dish, dish_details[dish]['servings']))
+        elif dish_details[dish]['servings'] == None:
+            print('{} requires the following ingredients (no serving information provided):'\
+            .format(dish))
+            for i, ingredient in enumerate(dish_details[dish]['ingredients']):
+                print('*', ingredient)
+        else:
+            print('{} serves {}, and requires the following ingredients:'\
+            .format(dish, dish_details[dish]['servings']))
+            for i, ingredient in enumerate(dish_details[dish]['ingredients']):
+                print('*', ingredient)
+    
+    print()
+
 def broadcast_instructions(epochs, epochs_d, instructions_ordered):
     """
     Print timings for various dishes
@@ -238,7 +274,7 @@ def db_duplication_check(dishes_d):
     cur.execute("SELECT dish FROM dishes")
     for dish in cur.fetchall():
         if dish[0] in dishes_d.keys():
-            print('{} already exists in the database. Please rename the dish in the yaml file'.format(dish[0]))
+            print('{} already exists in the database. Please rename the dish in the yaml file.'.format(dish[0]))
             sys.exit()
         else:
             continue
@@ -259,6 +295,8 @@ def write_db_entries(dishes_d):
         current_dish = {'dish_name': dish}   
         dish_durations = []
         dish_instructions = []
+        dish_ingredients = []
+        dish_servings = 0
         z = 0
 
         for step in dishes[dish].keys():
@@ -266,17 +304,23 @@ def write_db_entries(dishes_d):
                 dish_durations.append(dishes[dish][step][0])
                 dish_instructions.append(dishes[dish][step][1])
                 z += dishes[dish][step][0]
-            else:
+            elif step == 'description':
                 dish_description = dishes[dish][step]
+            elif step == 'ingredients':
+                dish_ingredients = dishes[dish][step]
+            elif step == 'servings':
+                dish_servings = dishes[dish][step]
 
         current_dish.update({'duration': dish_durations})
         current_dish.update({'total_duration': z})
         current_dish.update({'instructions': dish_instructions})
         current_dish.update({'description': dish_description})
+        current_dish.update({'ingredients': dish_ingredients})
+        current_dish.update({'servings': dish_servings})
 
         cur.execute("""
-        INSERT INTO dishes (dish, duration, total_duration, instructions, description) 
-        VALUES(%(dish_name)s, %(duration)s, %(total_duration)s, %(instructions)s, %(description)s)
+        INSERT INTO dishes (dish, duration, total_duration, instructions, description, ingredients, servings) 
+        VALUES(%(dish_name)s, %(duration)s, %(total_duration)s, %(instructions)s, %(description)s, %(ingredients)s, %(servings)s)
         """, 
         current_dish)
         conn.commit()
@@ -313,9 +357,10 @@ def read_db_entries(dishes):
             dishes_dict[entry[0]][i].append(entry[2][i])
             dishes_dict[entry[0]][i].append(entry[3][i])
         dishes_dict[entry[0]].update({'description': entry[4]})
-    
-    return dishes_dict
+        dishes_dict[entry[0]].update({'servings': entry[5]})
+        dishes_dict[entry[0]].update({'ingredients': entry[6]})
 
+    return dishes_dict
 # top-level scripting environment
 if __name__ == "__main__":
 
@@ -353,11 +398,12 @@ if __name__ == "__main__":
             dishes = yaml.load(open(sys.argv[2]))
 
             durations, max_duration, max_duration_idx = get_durations(dishes)
-            print('Reading all dishes from {}. Your meal will require {} minutes to prepare' \
+            print('Reading all dishes from {}. Your meal will require {} minutes to prepare.\n' \
                 .format(sys.argv[2], max_duration))
             dishes = assign_time(dishes)
             instructions, epochs, epochs_d = organise_steps(dishes)
             instructions_ordered = concurrency(instructions, epochs_d, dishes)
+            broadcast_details(dishes)
             broadcast_instructions(epochs, epochs_d, instructions_ordered)
         
     elif '-r' in sys.argv[1:]:
@@ -365,11 +411,12 @@ if __name__ == "__main__":
         dishes = yaml.load(open('dishes.yaml'))
 
         durations, max_duration, max_duration_idx = get_durations(dishes)
-        print('Reading all dishes from dishes.yaml. Your meal will require {} minutes to prepare' \
+        print('Reading all dishes from dishes.yaml. Your meal will require {} minutes to prepare.\n' \
             .format(max_duration))
         dishes = assign_time(dishes)
         instructions, epochs, epochs_d = organise_steps(dishes)
         instructions_ordered = concurrency(instructions, epochs_d, dishes)
+        broadcast_details(dishes)
         broadcast_instructions(epochs, epochs_d, instructions_ordered)
 
     # need code to ask if an existing dish should be overwritten, OR, if the current
@@ -381,11 +428,13 @@ if __name__ == "__main__":
         db_duplication_check(dishes)
 
         try:
+
             print('Writing all dishes from dishes.yaml to the database...')
             write_db_entries(dishes)
             print('\nDone!\n')
 
         except psycopg2.OperationalError:
+
             print('Cannot connect to the database.')
 
     elif '-fw' in sys.argv[1:]:
@@ -426,11 +475,12 @@ if __name__ == "__main__":
 
             selection = read_db_entries(selection)
             durations, max_duration, max_duration_idx = get_durations(selection)
-            print('\nPreparing {}. Your meal will require {} minutes to prepare.' \
+            print('\nPreparing {}. Your meal will require {} minutes to prepare.\n' \
                 .format((', ').join([dish for dish in selection.keys()]), max_duration))
             dishes = assign_time(selection)
             instructions, epochs, epochs_d = organise_steps(selection)
             instructions_ordered = concurrency(instructions, epochs_d, selection)
+            broadcast_details(selection)
             broadcast_instructions(epochs, epochs_d, instructions_ordered)
 
         except psycopg2.OperationalError:
