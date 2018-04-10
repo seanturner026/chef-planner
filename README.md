@@ -9,24 +9,24 @@ This planning has been automated using Python. The program goes through each dis
     {
       0 : [16, 'Boil noodles'],
       1 : [3, 'Mix noodles with sauce'],
-      'description': 'delish pasta',
-      'ingredients':['16 oz noodles', '1 jar pesto'],
-      'servings':null
+      'description' : 'delish pasta',
+      'ingredients' : ['16 oz noodles', '1 jar pesto'],
+      'servings' : null
     },
   'Salad':
     {
       0 : [12, 'Make dressing'],
       1 : [4, 'Toss salad'],
-      'description':null,
-      'ingredients':null,
-      'servings':3
+      'description' : null,
+      'ingredients' : null,
+      'servings' : 3
     },
   'Steak':
     {
       0 : [16, 'Cook steak'],
-      'description':null,
-      'ingredients':null,
-      'servings':null
+      'description' : null,
+      'ingredients' : null,
+      'servings' : null
     }
 }
 ```
@@ -79,10 +79,10 @@ Done!
 python cooking.py -s
 Select dishes to be prepared:
 
-Id Dish Name
- 0 Pasta
- 1 Salad
- 2 Steak
+Id      Dish Name
+ 0      Pasta
+ 1      Salad
+ 2      Steak
 
 Please provide the id numbers of the dishes you would like to prepare, separated by spaces.
 » 0 2
