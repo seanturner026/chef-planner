@@ -225,7 +225,7 @@ def broadcast_details(dishes):
     for dish in dish_details.keys():
         if dish_details[dish]['ingredients'] == None:
             if dish_details[dish]['servings'] == None:
-                print('{} (no servings or ingredients provided)'\
+                print('{} (no serving information or ingredients provided)'\
                 .format(dish))
             else:
                 print('{} serves {} (ingredients not provided)'\
@@ -337,7 +337,7 @@ def fetch_db():
     cur.execute("SELECT * FROM dishes;")
     for i, dish in enumerate(cur.fetchall()):
         db.update({i:dish})
-        print('{:2}'.format(i), db[i][1])
+        print('{:2} {:^4} {}'.format(i, ' ', db[i][1]))
     
     cur.close()
     conn.close()
@@ -461,7 +461,7 @@ if __name__ == "__main__":
 
         try:
             print('Select dishes to be prepared:\n')
-            print('Id Dish Name')
+            print('{} {:^4} {}'.format('Id', ' ', 'Dish Name'))
             db = fetch_db()
             
             selection = input('\nPlease provide the id numbers of the dishes you would like to prepare, separated by spaces.\n» ').split()
