@@ -100,7 +100,7 @@ Please provide the id numbers of the dishes you would like to prepare, separated
 
 Preparing Pasta, Steak. Your meal will require 19 minutes to prepare.
 
-Pasta serves 11, and requires the following ingredients:
+Pasta serves 4, and requires the following ingredients:
 * 16 oz noodles
 * 1 jar pesto
 Steak serves 11 (ingredients not provided)
