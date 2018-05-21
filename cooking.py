@@ -13,8 +13,8 @@ at the same point in time
 #     key in dishes.yaml that specifies that the oven is needed or that water needs to be boiled?
 #  5) Ask for how long it will take the user's oven to preheat to x temperature, or how long it will take 
 #     to boil water. Where to store these values for future use? in a second database?
-#  6) Add alias column to database? Will be used when printing instructions. Beef Burgeoneion v.
-#     Beef Burgeoneion with Onions and Carrots. Should the alias column support a character limit?
+#  6) Add alias column to database? Will be used when printing instructions. Beef Bourguignon v.
+#     Beef Bourguignon with Onions and Carrots. Should the alias column support a character limit?
 
 import yaml
 import argparse
@@ -200,15 +200,14 @@ def broadcast_instructions(instructions_ordered, max_duration):
             print('» Set timer for {} minutes\n'.format(list(instructions_ordered.keys())[i + 1] - list(instructions_ordered.keys())[i]))
         elif k == list(instructions_ordered.keys())[-1]:
             for dish in instructions_ordered[k].keys():
-                print('» {}: {}'.format(dish, instructions_ordered[k][dish][0]))
+                print('{}: {}'.format(dish, instructions_ordered[k][dish][0]))
             print('» Set timer for {} minutes. All of your dishes should be finished.'.format(max_duration - k))
         else:
             for dish in instructions_ordered[k].keys():
-                print('» {}: {}'.format(dish, instructions_ordered[k][dish][0]))
+                print('{}: {}'.format(dish, instructions_ordered[k][dish][0]))
             print('» Set timer for {} minutes'.format(k))
 
     print('\nEnjoy!')
-
 
 def db_duplication_check(dishes, conn, cur):
     """
@@ -222,7 +221,7 @@ def db_duplication_check(dishes, conn, cur):
 
 def flatten_yaml(dishes):
     """
-    Flatten each dish in dishes.yaml into a dictionary
+    Flatten each dish in dishes.yaml into a dictionary which can be entered into the database
     """
     dishes_flat = {}
     for dish in dishes.keys():
@@ -315,6 +314,7 @@ def update_db(dishes_flat, conn, cur):
         dishes_flat[dish])
 
         conn.commit()
+
         print('{} has been updated in the database'.format(dish))
     print('\nDone!')
 
@@ -450,9 +450,9 @@ if __name__ == "__main__":
         selection = input('\nPlease provide the id numbers of the dishes you would like to prepare, separated by spaces.\n» ').split()
         selection = [int(num) for num in selection]
         
-        for i, j in enumerate(selection):
+        for i, selected in enumerate(selection):
             if i in db.keys():
-                selection[i] = db[j][1:]
+                selection[i] = db[selected][1:]
                 # converting tuple structure to list
                 selection[i] = [item for item in selection[i]]
 
