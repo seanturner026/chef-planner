@@ -4,11 +4,8 @@
       0 : [16, 'Boil noodles'],
       1 : [3, 'Mix noodles with sauce'],
       'description' : 'delish pasta',
-      'ingredients' : [
-        '16 oz noodles', 
-        '1 jar pesto'
-        ],
-      'servings' : null
+      'ingredients' : ['16 oz noodles', '1 jar pesto'],
+      'servings' : 4
     },
   'Salad':
     {
