@@ -11,7 +11,7 @@ This planning has been automated using Python. The program goes through each dis
       1 : [3, 'Mix noodles with sauce'],
       'description' : 'delish pasta',
       'ingredients' : ['16 oz noodles', '1 jar pesto'],
-      'servings' : null
+      'servings' : 4
     },
   'Salad':
     {
@@ -53,16 +53,26 @@ optional arguments:
 python cooking.py -r
 Reading all dishes from dishes.yaml. Your meal will require 19 minutes to prepare.
 
-Pasta requires the following ingredients (no serving information provided):
+Pasta serves 4, and requires the following ingredients:
 * 16 oz noodles
 * 1 jar pesto
 Salad serves 3 (ingredients not provided)
-Steak (no servings or ingredients provided)
+Steak (no serving information or ingredients provided)
 
-set timer for   3 minutes » Boil noodles
-set timer for  12 minutes » Make dressing AND Cook steak
-set timer for   1 minutes » Toss salad
-set timer for   3 minutes » Mix noodles with sauce
+INSTRUCTIONS:
+
+Pasta: Boil noodles
+» Set timer for 3 minutes
+
+Salad: Make dressing
+Steak: Cook steak
+» Set timer for 12 minutes
+
+Salad: Toss salad
+» Set timer for 1 minutes
+
+» Pasta: Mix noodles with sauce
+» Set timer for 3 minutes. All of your dishes should be finished.
 
 Enjoy!
 ```
@@ -76,27 +86,35 @@ Wrote Steak to the database
 Done!
 ```
 ```
-python cooking.py -s
 Select dishes to be prepared:
 
-Id      Dish Name
- 0      Pasta
- 1      Salad
- 2      Steak
+ Id      Dish Name
+  0      Salad
+  1      Ramen
+  2      Sausage
+  3      Pasta
+  4      Steak
 
 Please provide the id numbers of the dishes you would like to prepare, separated by spaces.
-» 0 2
+» 3 4
 
 Preparing Pasta, Steak. Your meal will require 19 minutes to prepare.
 
-Pasta requires the following ingredients (no serving information provided):
+Pasta serves 11, and requires the following ingredients:
 * 16 oz noodles
-* 1 jar sauce
-Steak (no servings or ingredients provided)
+* 1 jar pesto
+Steak serves 11 (ingredients not provided)
 
-set timer for   3 minutes » Boil noodles
-set timer for  13 minutes » Cook steak
-set timer for   3 minutes » Mix noodles with sauce
+INSTRUCTIONS:
+
+Pasta: Boil noodles
+» Set timer for 3 minutes
+
+Steak: Cook steak
+» Set timer for 13 minutes
+
+» Pasta: Mix noodles with sauce
+» Set timer for 3 minutes. All of your dishes should be finished.
 
 Enjoy!
 ```
