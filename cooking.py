@@ -11,13 +11,17 @@ at the same point in time
 #  3) Flask + front end
 #  4) How to account for the time needed to boil water and also preheating oven? -- 
 #     key in dishes.yaml that specifies that the oven is needed or that water needs to be boiled?
-#  5) ask for how long it will take the user's oven to preheat to x temperature, or how long it will take 
+#  5) Ask for how long it will take the user's oven to preheat to x temperature, or how long it will take 
 #     to boil water. Where to store these values for future use? in a second database?
+#  6) Add alias column to database? Will be used when printing instructions. Beef Burgeoneion v.
+#     Beef Burgeoneion with Onions and Carrots. Should the alias column support a character limit?
 
 import yaml
 import argparse
 import sys
 import psycopg2
+# import sortedcontainers
+# import time
 
 def get_durations(dishes):
     """
@@ -25,29 +29,23 @@ def get_durations(dishes):
     """
     # instantiate a list to hold the total duration required for each dish
     durations = []
-    
     # loop through each dish, and write the total duration for the current dish
     # to durations
     for dish in dishes.keys():
         total_duration = 0
-
         # calculating the total duration for the current dish
         for step in dishes[dish].keys():
             if type(step) == int:
                 total_duration += dishes[dish][step][0]
-
         # writing total duration for current dish to total_duration list
         durations.append(total_duration)
-
         # instantiating max duration variable
         max_duration = max(durations)
-
         # instantiating index of max duration in durations as a list
         # serves to identify which dish(es) requires the most time
         max_duration_idx = [i for i, v in enumerate(durations) if v == max_duration][0]
 
     return durations, max_duration, max_duration_idx
-
 
 def assign_time(dishes):
     """
@@ -55,55 +53,40 @@ def assign_time(dishes):
     """
     # iterate through dishes
     for i, k in enumerate(dishes.keys()):
-
         # flow control to select the dish(es) requiring the most time
         if i == max_duration_idx:
-
             # iterate through steps for the current dish
             for j, step in enumerate(dishes[k].keys()):
-
                 # flow control to select the step to execute first
                 if j == 0:
-
                     # write time 0 to the list for step zero for current dish
                     dishes[k][step].append(0)
-
                 # flow control to select following steps
                 elif type(step) == int:
-
                     # instantiate variable to hold current point in time after
                     # all preceeding steps have been executed
                     start = dishes[k][step - 1][0] + dishes[k][step-1][2]
-
                     # write current point in time to current step for current dish
                     dishes[k][step].append(start)
-
         # flow control for all other dishes
         else:
-
             # iterate through steps for the current dish
             for j, step in enumerate(dishes[k].keys()):
-
                 # flow control to select the step to execute first
                 if j == 0:
-
                     # instantiate variable to hold point in time when the dish
                     # should be started
                     start = durations[max_duration_idx] - durations[i]
-
                     # write time to the list for step zero for the current dish
                     dishes[k][step].append(start)
-
                 # flow control to select following steps
                 elif type(step) == int:
-
                     # instantiate variable to hold current point in time after
                     # all preceeding steps have been executed
                     start = dishes[k][step - 1][0] + dishes[k][step-1][2]
-
                     # write current point in time to current step for current dish
                     dishes[k][step].append(start)
-
+    
     return dishes
 
 def organise_steps(dishes):
@@ -112,42 +95,31 @@ def organise_steps(dishes):
     point in time) and list to hold points in time that require action
     """
     instructions, epochs = [], []
-
     # iterate through dishes
     for dish in dishes.keys():
-
         # iterate through steps
         for step in dishes[dish].keys():
-            
             if type(step) == int:
-                
                 # extract step details (duration, instruction, point in time) for
-                # current dish, and write to instrcutions list
+                # current dish, and write to instructions list
                 instructions.append(dishes[dish][step])
-
+                # append current dish to instructions list
+                instructions[-1].append(dish)
                 # extract points in time that require action to epochs list
                 epochs.append(dishes[dish][step][2])
-
     # sort points in time in ascending order
     epochs = sorted(epochs)
-
     # create dictionary to keep track of point in time frequency
     epochs_d = {}
-
     # iterate through points in time
     for e in epochs:
-
         # flow control to see if a particular point in time already exists
         if e in epochs_d.keys():
-
             # increase point in time frequency by one
-            epochs_d.update({e : (epochs_d[e]+1)})
-
+            epochs_d.update({e:(epochs_d[e]+1)})
         else:
-
             # create specific point in time as a dictionary key
             epochs_d[e] = 1
-
     # add final point in time to epochs 
     epochs.append(max_duration)
     epochs_d.update({max_duration:0})
@@ -159,52 +131,26 @@ def concurrency(instructions, epochs_d, dishes):
     Read output generated by organise_steps function and handle points in time 
     which require more than one action
     """
-    # instantiate list to hold step description text for steps which occur at
-    # the same point in time
-    instruction_temp = []
-
-    # instantiate list to hold all step details in order
-    instructions_ordered = []
-
+    # instantiate dictionary to hold all step details in order
+    instructions_ordered = {}
     # iterate through ordered points in time
-    for i, e in enumerate(epochs_d.keys()):
-
-        # flow control for points in time associated with multiple actions
+    for e in epochs_d.keys():
         if epochs_d[e] > 1:
 
+            d = {}
             # iterate over instructions holding all step details
             for instruction in instructions:
-
                 # flow control to select steps in order
                 if e == instruction[2]:
+                    d.update({instruction[3] : [instruction[1], instruction[2], instruction[0]]})
+            instructions_ordered.update({e:d})
+            continue
 
-                    # extract step description text for all associated actions
-                    instruction_temp.append(instruction[1])
-
-                    # instantiate variable to hold all step details. variable is
-                    # overwritten because the only important information is point
-                    # in time
-                    step_temp = instruction
-                    step_temp.append(list(epochs_d.keys())[i+1] - list(epochs_d.keys())[i])
-
-            # append current step details to master step details list
-            instructions_ordered.append(step_temp)
-
-            # update step instruction to reflect all necessary actions
-            instructions_ordered[i][1] = (' AND ').join(instruction_temp)
-
-        # flow control for points in time associated with only one action
-        else:
-
-            # iterate through each list in instructions
-            for instruction in instructions:
-
-                # flow control to select steps in order
-                if e == instruction[2]:
-
-                    # write step lists to instructions_ordered in order of time
-                    instruction.append(list(epochs_d.keys())[i+1] - list(epochs_d.keys())[i])
-                    instructions_ordered.append(instruction)
+        for instruction in instructions:
+            # flow control to select steps in order
+            if e == instruction[2]:
+                # # write step lists to instructions_ordered in order of time
+                instructions_ordered.update({e : {instruction[3] : [instruction[1], instruction[2], instruction[0]]}})
 
     return instructions_ordered
 
@@ -212,7 +158,6 @@ def broadcast_details(dishes):
     """
     Print the ingredients and servings required to produce the various dishes
     """
-    
     dish_details = {}
     for dish in dishes.keys():
         dish_details.update({dish:{}})
@@ -233,118 +178,147 @@ def broadcast_details(dishes):
         elif dish_details[dish]['servings'] == None:
             print('{} requires the following ingredients (no serving information provided):'\
             .format(dish))
-            for i, ingredient in enumerate(dish_details[dish]['ingredients']):
+            for ingredient in dish_details[dish]['ingredients']:
                 print('*', ingredient)
         else:
             print('{} serves {}, and requires the following ingredients:'\
             .format(dish, dish_details[dish]['servings']))
-            for i, ingredient in enumerate(dish_details[dish]['ingredients']):
+            for ingredient in dish_details[dish]['ingredients']:
                 print('*', ingredient)
-    
     print()
 
-def broadcast_instructions(epochs, epochs_d, instructions_ordered):
+def broadcast_instructions(instructions_ordered, max_duration):
     """
     Print timings for various dishes
     """
-
+    print('INSTRUCTIONS:\n')
     # iterate through points in time
-    for p in epochs_d.keys():
+    for i, k in enumerate(instructions_ordered.keys()):
+        if k != list(instructions_ordered.keys())[-1]:
+            for dish in instructions_ordered[k].keys():
+                print('{}: {}'.format(dish, instructions_ordered[k][dish][0]))
+            print('» Set timer for {} minutes\n'.format(list(instructions_ordered.keys())[i + 1] - list(instructions_ordered.keys())[i]))
+        elif k == list(instructions_ordered.keys())[-1]:
+            for dish in instructions_ordered[k].keys():
+                print('» {}: {}'.format(dish, instructions_ordered[k][dish][0]))
+            print('» Set timer for {} minutes. All of your dishes should be finished.'.format(max_duration - k))
+        else:
+            for dish in instructions_ordered[k].keys():
+                print('» {}: {}'.format(dish, instructions_ordered[k][dish][0]))
+            print('» Set timer for {} minutes'.format(k))
 
-        # iterate through ordered lists of details for all steps
-        for instruction in instructions_ordered:
+    print('\nEnjoy!')
 
-            # flow control to select list of details depending on point in time
-            if instruction[2] == p:
 
-                    # print time until next step, and action to be taken
-                    print('set timer for {:3} minutes » {}'\
-                    .format(instruction[3], instruction[1]))
-
-    print('\nEnjoy!\n')
-
-def db_duplication_check(dishes_d):
+def db_duplication_check(dishes, conn, cur):
     """
-    Check the database for duplicate dish names, and prevent duplicates from
-    being entered into the database
+    Check the database for duplicate dish names, and prevent duplicates from being entered into the database
     """
-    conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
-    cur = conn.cursor()
-
     cur.execute("SELECT dish FROM dishes")
     for dish in cur.fetchall():
-        if dish[0] in dishes_d.keys():
+        if dish[0] in dishes.keys():
             print('{} already exists in the database. Please rename the dish in the yaml file.'.format(dish[0]))
             sys.exit()
-        else:
-            continue
 
-    cur.close()
-    conn.close()    
-
-
-def write_db_entries(dishes_d):
+def flatten_yaml(dishes):
     """
-    Flatten each dish in dishes.yaml into a dictionary, and enter resulting
-    dictionary into the persistent database
+    Flatten each dish in dishes.yaml into a dictionary
     """
-    conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
-    cur = conn.cursor()
-
-    for dish in dishes_d.keys():
-        current_dish = {'dish_name': dish}   
+    dishes_flat = {}
+    for dish in dishes.keys():
+        dishes_flat.update({dish : {}})
+        dishes_flat[dish].update({'dish_name': dish})
         dish_durations = []
         dish_instructions = []
         dish_ingredients = []
         dish_servings = 0
-        z = 0
+        total_duration = 0
 
         for step in dishes[dish].keys():
             if type(step) == int:
                 dish_durations.append(dishes[dish][step][0])
                 dish_instructions.append(dishes[dish][step][1])
-                z += dishes[dish][step][0]
+                total_duration += dishes[dish][step][0]
             elif step == 'description':
                 dish_description = dishes[dish][step]
             elif step == 'ingredients':
                 dish_ingredients = dishes[dish][step]
             elif step == 'servings':
                 dish_servings = dishes[dish][step]
+        
+        dishes_flat[dish].update({'dish_name': dish})
+        dishes_flat[dish].update({'duration': dish_durations})
+        dishes_flat[dish].update({'total_duration': total_duration})
+        dishes_flat[dish].update({'instructions': dish_instructions})
+        dishes_flat[dish].update({'description': dish_description})
+        dishes_flat[dish].update({'ingredients': dish_ingredients})
+        dishes_flat[dish].update({'servings': dish_servings})
 
-        current_dish.update({'duration': dish_durations})
-        current_dish.update({'total_duration': z})
-        current_dish.update({'instructions': dish_instructions})
-        current_dish.update({'description': dish_description})
-        current_dish.update({'ingredients': dish_ingredients})
-        current_dish.update({'servings': dish_servings})
+    return dishes_flat
+
+def write_db_entries(dishes_flat, conn, cur):
+    """
+    Enter flattened dictionary into the database
+    """
+    for dish in dishes_flat.keys():
 
         cur.execute("""
         INSERT INTO dishes (dish, duration, total_duration, instructions, description, ingredients, servings) 
         VALUES(%(dish_name)s, %(duration)s, %(total_duration)s, %(instructions)s, %(description)s, %(ingredients)s, %(servings)s)
         """, 
-        current_dish)
+        dishes_flat[dish])
+
         conn.commit()
-        print('Wrote {} to the database'.format(current_dish['dish_name']))
-    
-    cur.close()
-    conn.close()
+        print('Wrote {} to the database'.format(dishes_flat[dish]['dish_name']))
 
-def fetch_db():
-    conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
-    cur = conn.cursor()
-
+def fetch_db(conn, cur):
+    """
+    Collect all database entries and print the dish id and dish name to the console
+    """
     db = {}
-    cur.execute("SELECT * FROM dishes;")
+    cur.execute("SELECT * FROM dishes")
     for i, dish in enumerate(cur.fetchall()):
         db.update({i:dish})
-        print('{:2} {:^4} {}'.format(i, ' ', db[i][1]))
+    # fetch all dishes from the database
+    for i in range(len(db.keys())):
+        print('{:3} {:^4} {}'.format(i, ' ', db[i][1]))
     
-    cur.close()
-    conn.close()
-
     return db
 
-def read_db_entries(dishes):
+def fetch_dish_id(dishes_flat, conn, cur):
+    """
+    Appends dish id from database to flattened yaml
+    """
+    cur.execute("SELECT * FROM dishes")
+    for dish in enumerate(cur.fetchall()):
+        if dish[1][1] in dishes_flat.keys():
+            dishes_flat[dish[1][1]].update({'id' : dish[1][0]})
+
+    return dishes_flat
+
+def update_db(dishes_flat, conn, cur):
+    """
+    Modifies existing database entry indexed by dish id
+    """
+    for dish in dishes_flat.keys():
+
+        cur.execute("""
+        UPDATE dishes 
+        SET duration = %(duration)s, 
+        total_duration = %(total_duration)s, 
+        instructions = %(instructions)s, 
+        description = %(description)s, 
+        ingredients = %(ingredients)s, 
+        servings = %(servings)s
+        WHERE id = %(id)s
+        """,
+        dishes_flat[dish])
+
+        conn.commit()
+        print('{} has been updated in the database'.format(dish))
+    print('\nDone!')
+
+def read_db_entries(dishes, conn, cur):
     """
     Combine all tuples produced by database query back into format resembling dishes.yaml
     """
@@ -361,6 +335,7 @@ def read_db_entries(dishes):
         dishes_dict[entry[0]].update({'ingredients': entry[6]})
 
     return dishes_dict
+
 # top-level scripting environment
 if __name__ == "__main__":
 
@@ -371,14 +346,18 @@ if __name__ == "__main__":
 
     parser.add_argument('-r', '--reader', action='store_false', default=False,
                         help='create cooking plan using dishes.yaml')
-    
-    parser.add_argument('-s', '--selector', action='store_false', default=False,
-                        help='create cooking plan using recipies existing in the \
-                        persistent database')
 
     parser.add_argument('-w', '--writer', action='store_false', default=False,
                         help='write recipies from dishes.yaml to the \
                         persistent database')
+    
+    parser.add_argument('-s', '--selector', action='store_false', default=False,
+                        help='create cooking plan using recipies existing in the \
+                        persistent database')    
+    
+    parser.add_argument('-m', '--modifier', action='store_false', default=False,
+                        help='modify all recipies in the persistent database by \
+                        the same name as in modify.yaml')
     
     parser.add_argument('-fw', '-file writer', action='store_false', default=False,
                         help='write recipies from a specified yaml file to the \
@@ -388,13 +367,9 @@ if __name__ == "__main__":
         print(parser.parse_args())
 
     elif '-f' in sys.argv[1:]:
-
         if len(sys.argv) < 3:
-            
             print('Please specify a file after the \'-f\' flag')
-
         else:
-
             dishes = yaml.load(open(sys.argv[2]))
 
             durations, max_duration, max_duration_idx = get_durations(dishes)
@@ -404,10 +379,9 @@ if __name__ == "__main__":
             instructions, epochs, epochs_d = organise_steps(dishes)
             instructions_ordered = concurrency(instructions, epochs_d, dishes)
             broadcast_details(dishes)
-            broadcast_instructions(epochs, epochs_d, instructions_ordered)
+            broadcast_instructions(instructions_ordered, max_duration)
         
     elif '-r' in sys.argv[1:]:
-
         dishes = yaml.load(open('dishes.yaml'))
 
         durations, max_duration, max_duration_idx = get_durations(dishes)
@@ -417,71 +391,112 @@ if __name__ == "__main__":
         instructions, epochs, epochs_d = organise_steps(dishes)
         instructions_ordered = concurrency(instructions, epochs_d, dishes)
         broadcast_details(dishes)
-        broadcast_instructions(epochs, epochs_d, instructions_ordered)
+        broadcast_instructions(instructions_ordered, max_duration)
 
     # need code to ask if an existing dish should be overwritten, OR, if the current
     # dish can be renamed
     elif '-w' in sys.argv[1:]:
-        
         dishes = yaml.load(open('dishes.yaml'))
 
-        db_duplication_check(dishes)
-
         try:
-
-            print('Writing all dishes from dishes.yaml to the database...')
-            write_db_entries(dishes)
-            print('\nDone!\n')
-
+            conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
+            cur = conn.cursor()
         except psycopg2.OperationalError:
-
             print('Cannot connect to the database.')
+       
+        db_duplication_check(dishes, conn, cur)
+
+        print('Writing all dishes from dishes.yaml to the database...')
+        dishes_flat = flatten_yaml(dishes)
+        write_db_entries(dishes_flat, conn, cur)
+        print('\nDone!')
+
+        conn.close()
+        cur.close()
 
     elif '-fw' in sys.argv[1:]:
         
         if len(sys.argv) < 3:
-            
-            print('Please specify a file after the \'-fw\' flag')
-        
+            print('Please specify a file after the \"-fw\" flag')
         else:
-            
             dishes = yaml.load(open(sys.argv[2]))
-
             try:
-
-                print('Writing all dishes from {} to the database...'.format(sys.argv[2]))
-                db_duplication_check(dishes)
-                write_db_entries(dishes)
-
+                conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
+                cur = conn.cursor()
             except psycopg2.OperationalError:
-
                 print('Cannot connect to the database.')
-    
+            db_duplication_check(dishes, conn, cur)
+
+            print('Writing all dishes from {} to the database...'.format(sys.argv[2]))
+            dishes_flat = flatten_yaml(dishes)
+            write_db_entries(dishes_flat, conn, cur)
+            print('\nDone!')
+
+            conn.close()
+            cur.close()
+
     elif '-s' in sys.argv[1:]:
 
         try:
-            print('Select dishes to be prepared:\n')
-            print('{} {:^4} {}'.format('Id', ' ', 'Dish Name'))
-            db = fetch_db()
-            
-            selection = input('\nPlease provide the id numbers of the dishes you would like to prepare, separated by spaces.\n» ').split()
-            selection = [int(num) for num in selection]
-            
-            for i, j in enumerate(selection):
-                if i in db.keys():
-                    selection[i] = db[j][1:]
-                    # converting tuple structure to list
-                    selection[i] = [item for item in selection[i]]
-
-            selection = read_db_entries(selection)
-            durations, max_duration, max_duration_idx = get_durations(selection)
-            print('\nPreparing {}. Your meal will require {} minutes to prepare.\n' \
-                .format((', ').join([dish for dish in selection.keys()]), max_duration))
-            dishes = assign_time(selection)
-            instructions, epochs, epochs_d = organise_steps(selection)
-            instructions_ordered = concurrency(instructions, epochs_d, selection)
-            broadcast_details(selection)
-            broadcast_instructions(epochs, epochs_d, instructions_ordered)
-
+            conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
+            cur = conn.cursor()
         except psycopg2.OperationalError:
             print('Cannot connect to the database.')
+
+        print('Select dishes to be prepared:\n')
+        print('{} {:^4} {}'.format(' Id', ' ', 'Dish Name'))
+        db = fetch_db(conn, cur)
+        
+        selection = input('\nPlease provide the id numbers of the dishes you would like to prepare, separated by spaces.\n» ').split()
+        selection = [int(num) for num in selection]
+        
+        for i, j in enumerate(selection):
+            if i in db.keys():
+                selection[i] = db[j][1:]
+                # converting tuple structure to list
+                selection[i] = [item for item in selection[i]]
+
+        selection = read_db_entries(selection, conn, cur)
+        durations, max_duration, max_duration_idx = get_durations(selection)
+        print('\nPreparing {}. Your meal will require {} minutes to prepare.\n' \
+            .format((', ').join([dish for dish in selection.keys()]), max_duration))
+        dishes = assign_time(selection)
+        instructions, epochs, epochs_d = organise_steps(selection)
+        instructions_ordered = concurrency(instructions, epochs_d, selection)
+        broadcast_details(selection)
+        broadcast_instructions(instructions_ordered, max_duration)
+
+        conn.close()
+        cur.close()
+
+    elif '-m' in sys.argv[1:]:
+
+        try:
+            conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
+            cur = conn.cursor()
+        except psycopg2.OperationalError:
+            print('Cannot connect to the database.')
+
+        dishes_modified = yaml.load(open(sys.argv[2]))
+
+        dishes_flat = flatten_yaml(dishes_modified)
+        dishes_flat = fetch_dish_id(dishes_flat, conn, cur)
+
+        print('The following dish(es) will be modified to match the contents of modify.yaml:')
+        for dish in dishes_flat.keys():
+            print('* {}'.format(dish))
+        
+        confirmation = input('Proceed? (y/n) > ')
+
+        if confirmation == 'y':
+            update_db(dishes_flat, conn, cur)
+        elif confirmation == 'n':
+            print('Database will not be updated')
+        else:
+            print('Please input the letters y or n.')
+
+        conn.close()
+        cur.close()
+
+    else:
+        print('Please specify a flag as a command line argument. See \"python cooking.py -h\" for additional information.')
