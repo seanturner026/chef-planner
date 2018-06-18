@@ -363,7 +363,7 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             print('Please specify a file after the \'-f\' flag')
         else:
-            dishes = ruamel.yaml.load(open(sys.argv[2]))
+            dishes = ruamel.yaml.load(open(sys.argv[2]), Loader=ruamel.yaml.Loader)
 
             durations, max_duration, max_duration_idx = get_durations(dishes)
             print('Reading all dishes from {}. Your meal will require {} minutes to prepare.\n' \
@@ -389,7 +389,7 @@ if __name__ == "__main__":
     # need code to ask if an existing dish should be overwritten, OR, if the current
     # dish can be renamed
     elif '-w' in sys.argv[1:]:
-        dishes = ruamel.yaml.load(open('dishes.yaml'))
+        dishes = ruamel.yaml.load(open('dishes.yaml'), Loader=ruamel.yaml.Loader)
 
         try:
             conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
@@ -412,7 +412,7 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             print('Please specify a file after the \"-fw\" flag')
         else:
-            dishes = ruamel.yaml.load(open(sys.argv[2]))
+            dishes = ruamel.yaml.load(open(sys.argv[2]), Loader=ruamel.yaml.Loader)
             try:
                 conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
                 cur = conn.cursor()
@@ -470,7 +470,7 @@ if __name__ == "__main__":
         except psycopg2.OperationalError:
             print('Cannot connect to the database.')
 
-        dishes_modified = ruamel.yaml.load(open(sys.argv[2]))
+        dishes_modified = ruamel.yaml.load(open(sys.argv[2]), Loader=ruamel.yaml.Loader)
 
         dishes_flat = flatten_yaml(dishes_modified)
         dishes_flat = fetch_dish_id(dishes_flat, conn, cur)
