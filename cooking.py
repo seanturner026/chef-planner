@@ -375,7 +375,7 @@ if __name__ == "__main__":
             broadcast_instructions(instructions_ordered, max_duration)
 
     elif '-r' in sys.argv[1:]:
-        dishes = ruamel.yaml.load(open('dishes.yaml'))
+        dishes = ruamel.yaml.load(open('dishes.yaml'), Loader=ruamel.yaml.Loader)
 
         durations, max_duration, max_duration_idx = get_durations(dishes)
         print('Reading all dishes from dishes.yaml. Your meal will require {} minutes to prepare.\n' \
