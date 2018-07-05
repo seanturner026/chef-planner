@@ -4,21 +4,6 @@ detailing when to execute each step listed in dishes.yaml so that all dishes wil
 at the same point in time
 """
 
-# TODO:
-
-#  1) Data visualisations? -- time on x-axis depicting frequency of actions.
-#  2) Create class to hold all functions
-#  3) Flask + front end
-#  4) How to account for the time needed to boil water and also preheating oven?
-# key in dishes.yaml that specifies that the oven is needed or that water
-# needs to be boiled?
-#  5) Ask for how long it will take the user's oven to preheat to x
-# temperature, or how long it will take  to boil water. Where to store these
-# values for future use? in a second database?
-#  6) Add alias column to database? Will be used when printing instructions.
-# Beef Bourguignon v. Beef Bourguignon with Onions and Carrots. Should the
-# alias column support a character limit?
-
 import ruamel.yaml
 import argparse
 import sys
