@@ -1,6 +1,6 @@
 Cooking best practice involves planning such that all of your dishes finish at the same time. All of your food will be warm, and you have  time for washing up in otherwise idle moments. 
 
-This planning has been automated using Python. The program goes through each dish in the yaml file, reads how long each step requires in minutes, and determines at what points in time each step should be executed. Once all of the calculations are completed, the final instructions are printed to the console.
+This planning has been automated using Python. The program goes through each dish in the yaml file, reads how long each step requires in minutes, and determines at what points in time each step should be executed. Once all of the calculations are completed, the final instructions are printed to the console. Yaml files can also be imported into a database and read by the application which eliminates the need to manage the yaml files.
 
 ### Dishes.yaml
 ```
@@ -86,6 +86,7 @@ Wrote Steak to the database
 Done!
 ```
 ```
+python cooking.py -s
 Select dishes to be prepared:
 
  Id      Dish Name
