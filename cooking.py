@@ -4,11 +4,17 @@ detailing when to execute each step listed in dishes.yaml so that all dishes wil
 at the same point in time
 """
 
-import ruamel.yaml
+from ruamel.yaml import YAML
 import argparse
 import sys
 import psycopg2
 # import time
+
+def load_yaml(yaml_file):
+    """Load a yaml file containing dishes"""
+    yaml = YAML()
+    with open(yaml_file) as file:
+        return yaml.load(file)
 
 def get_durations(dishes):
     """
@@ -205,6 +211,11 @@ def db_duplication_check(dishes, conn, cur):
         if dish[0] in dishes.keys():
             print('{} already exists in the database. Please rename the dish in the yaml file.'.format(dish[0]))
             sys.exit()
+            # print('Would you like to rename {}, exit?'.format(dish[0]))
+            # choice = input('rename / exit ')
+            # if choice == 'exit':
+            #     sys.exit()
+            # else:
 
 def flatten_yaml(dishes):
     """
@@ -348,7 +359,7 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             print('Please specify a file after the \'-f\' flag')
         else:
-            dishes = ruamel.yaml.load(open(sys.argv[2]), Loader=ruamel.yaml.Loader)
+            dishes = load_yaml(sys.argv[2])
 
             durations, max_duration, max_duration_idx = get_durations(dishes)
             print('Reading all dishes from {}. Your meal will require {} minutes to prepare.\n' \
@@ -360,8 +371,7 @@ if __name__ == "__main__":
             broadcast_instructions(instructions_ordered, max_duration)
 
     elif '-r' in sys.argv[1:]:
-        dishes = ruamel.yaml.load(open('dishes.yaml'), Loader=ruamel.yaml.Loader)
-
+        dishes = load_yaml('dishes.yaml')
         durations, max_duration, max_duration_idx = get_durations(dishes)
         print('Reading all dishes from dishes.yaml. Your meal will require {} minutes to prepare.\n' \
             .format(max_duration))
@@ -374,7 +384,7 @@ if __name__ == "__main__":
     # need code to ask if an existing dish should be overwritten, OR, if the current
     # dish can be renamed
     elif '-w' in sys.argv[1:]:
-        dishes = ruamel.yaml.load(open('dishes.yaml'), Loader=ruamel.yaml.Loader)
+        dishes = load_yaml('dishes.yaml')
 
         try:
             conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
@@ -397,7 +407,7 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             print('Please specify a file after the \"-fw\" flag')
         else:
-            dishes = ruamel.yaml.load(open(sys.argv[2]), Loader=ruamel.yaml.Loader)
+            dishes = load_yaml(sys.argv[2])
             try:
                 conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
                 cur = conn.cursor()
@@ -455,7 +465,7 @@ if __name__ == "__main__":
         except psycopg2.OperationalError:
             print('Cannot connect to the database.')
 
-        dishes_modified = ruamel.yaml.load(open(sys.argv[2]), Loader=ruamel.yaml.Loader)
+        dishes_modified = load_yaml(sys.argv[2])
 
         dishes_flat = flatten_yaml(dishes_modified)
         dishes_flat = fetch_dish_id(dishes_flat, conn, cur)
@@ -477,5 +487,5 @@ if __name__ == "__main__":
         cur.close()
 
     else:
-        print('Please specify a flag as a command line argument. \
-        See \"python cooking.py -h\" for additional information.')
+        print('Please specify a flag as a command line argument.') 
+        print('See \"python cooking.py -h\" for additional information.')
