@@ -6,31 +6,26 @@ Please feel free to contact me at sean.turner026@gmail.com if you have a feature
 
 ### Dishes.yaml
 ```
-{
-  'Pasta':
-    {
-      0 : [16, 'Boil noodles'],
-      1 : [3, 'Mix noodles with sauce'],
-      'description' : 'delish pasta',
-      'ingredients' : ['16 oz noodles', '1 jar pesto'],
-      'servings' : 4
-    },
-  'Salad':
-    {
-      0 : [12, 'Make dressing'],
-      1 : [4, 'Toss salad'],
-      'description' : null,
-      'ingredients' : null,
-      'servings' : 3
-    },
-  'Steak':
-    {
-      0 : [16, 'Cook steak'],
-      'description' : null,
-      'ingredients' : null,
-      'servings' : null
-    }
-}
+---
+Pasta:
+  0: [16, 'Boil noodles']
+  1: [3, 'Mix noodles with sauce']
+  description: 'delish pasta'
+  ingredients: ['16 oz noodles', '1 jar pesto']
+  servings: 4
+
+Salad:
+  0 : [12, 'Make dressing']
+  1 : [4, 'Toss salad']
+  description: null
+  ingredients: null
+  servings: 3
+  
+Steak:
+  0 : [16, 'Cook steak']
+  description: null
+  ingredients: null
+  servings: null
 ```
 
 ### Usage
