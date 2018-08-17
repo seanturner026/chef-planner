@@ -31,7 +31,7 @@ Steak:
 ### Usage
 
 ```
-python cooking.py -h
+$ python cooking.py -h
 
 Chef planning assistant
 
@@ -47,7 +47,7 @@ optional arguments:
                      persistent database
 ```
 ```
-python cooking.py -r
+$ python cooking.py -r
 Reading all dishes from dishes.yaml. Your meal will require 19 minutes to prepare.
 
 Pasta serves 4, and requires the following ingredients:
@@ -74,7 +74,7 @@ Salad: Toss salad
 Enjoy!
 ```
 ```
-python cooking.py -w
+$ python cooking.py -w
 Writing all dishes from dishes.yaml to the database...
 Wrote Pasta to the database
 Wrote Salad to the database
@@ -83,7 +83,7 @@ Wrote Steak to the database
 Done!
 ```
 ```
-python cooking.py -s
+$ python cooking.py -s
 Select dishes to be prepared:
 
  Id      Dish Name
