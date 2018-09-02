@@ -12,7 +12,7 @@ Salad:
   description: null
   ingredients: null
   servings: 3
-  
+
 Steak:
   0 : [16, 'Cook steak']
   description: null
