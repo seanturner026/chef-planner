@@ -6,11 +6,10 @@ at the same point in time
 
 import argparse
 import sys
-# import time
+import time
 
-import psycopg2
 from ruamel.yaml import YAML
-
+import cook_functions
 
 def load_yaml(yaml_file):
     """Load a yaml file containing dishes"""
@@ -410,161 +409,18 @@ def parse_command_line():
     return vars(parser.parse_args())
 
 
-def switch_decorator(function):
-    """Flow control which passes args to decorated function"""
-    def wrapper(args):
-        """Provides arguments to decorated function if needed"""
-        if function.__name__ in ['func_file', 'func_file_writer', 'func_modifier']:
-            return function(args)
-        else:
-            return function()
-    return wrapper
-
-
-@switch_decorator
-def func_file(args):
-    """Calls function necessary to read a given yaml and produce the cooking plan"""
-    dishes = load_yaml(args.get('file'))
-    durations, max_duration, max_duration_idx = get_durations(dishes)
-    print('Reading all dishes from {}. Your meal will require {} minutes to prepare.\n'
-          .format(args.get('file'), max_duration))
-    dishes = assign_time(dishes, max_duration_idx, durations)
-    instructions, epochs_d = organise_steps(dishes, max_duration)
-    instructions_ordered = concurrency(instructions, epochs_d)
-    broadcast_details(dishes)
-    broadcast_instructions(instructions_ordered, max_duration)
-    return None
-
-
-@switch_decorator
-def func_reader():
-    """Calls functions necessary to read dishes.yaml and produce the cooking plan"""
-    dishes = load_yaml('dishes.yaml')
-    durations, max_duration, max_duration_idx = get_durations(dishes)
-    print('Reading all dishes from dishes.yaml. Your meal will require {} minutes to prep.\n'
-          .format(max_duration))
-    dishes = assign_time(dishes, max_duration_idx, durations)
-    instructions, epochs_d = organise_steps(dishes, max_duration)
-    instructions_ordered = concurrency(instructions, epochs_d)
-    broadcast_details(dishes)
-    broadcast_instructions(instructions_ordered, max_duration)
-    return None
-
-
-@switch_decorator
-def func_writer():
-    """Calls functions necessary to write any dishes from dishes.yaml to the database"""
-    dishes = load_yaml('dishes.yaml')
-    try:
-        conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
-        cur = conn.cursor()
-    except psycopg2.OperationalError:
-        print('Cannot connect to the database.')
-    db_duplication_check(dishes, cur)
-    print('Writing all dishes from dishes.yaml to the database...')
-    dishes_flat = flatten_yaml(dishes)
-    write_db_entries(dishes_flat, conn, cur)
-    print('\nDone!')
-    conn.close()
-    cur.close()
-    return None
-
-
-@switch_decorator
-def func_file_writer(args):
-    """Calls functions necessary to write any dishes from a given yaml file to the database"""
-    dishes = load_yaml(args.get('file_writer'))
-    try:
-        conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
-        cur = conn.cursor()
-    except psycopg2.OperationalError:
-        print('Cannot connect to the database.')
-    db_duplication_check(dishes, cur)
-    print('Writing all dishes from {} to the database...'.format(args.get('file_writer')))
-    dishes_flat = flatten_yaml(dishes)
-    write_db_entries(dishes_flat, conn, cur)
-    print('\nDone!')
-    conn.close()
-    cur.close()
-    return None
-
-
-@switch_decorator
-def func_selector():
-    """Calls functions necessary to select dishes from the database and output the cooking plan"""
-    try:
-        conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
-        cur = conn.cursor()
-    except psycopg2.OperationalError:
-        print('Cannot connect to the database.')
-    print('Select dishes to be prepared:\n')
-    print('{} {:^4} {}'.format(' Id', ' ', 'Dish Name'))
-    items = fetch_db(cur)
-    selection = input('\nPlease provide the id numbers of the dishes you would '
-                      'like to prepare, separated by spaces.\n» ').split()
-    selection = [int(num) for num in selection]
-    for i, selected in enumerate(selection):
-        if i in items.keys():
-            selection[i] = items[selected][1:]
-            # converting tuple structure to list
-            selection[i] = [item for item in selection[i]]
-    selection = read_db_entries(selection)
-    durations, max_duration, max_duration_idx = get_durations(selection)
-    print('\nPreparing {}. Your meal will require {} minutes to prepare.\n'
-          .format((', ').join([dish for dish in selection.keys()]), max_duration))
-    selection = assign_time(selection, max_duration_idx, durations)
-    instructions, epochs_d = organise_steps(selection, max_duration)
-    instructions_ordered = concurrency(instructions, epochs_d)
-    broadcast_details(selection)
-    broadcast_instructions(instructions_ordered, max_duration)
-    conn.close()
-    cur.close()
-    return None
-
-
-@switch_decorator
-def func_modifier(args):
-    """Calls all functions necessary to modifies dishes in the database to reflect the dishes with
-    the same name in the given yaml file
-    """
-    try:
-        conn = psycopg2.connect(dbname='cooking', user='sean', host='localhost')
-        cur = conn.cursor()
-    except psycopg2.OperationalError:
-        print('Cannot connect to the database.')
-    dishes_modified = load_yaml(args.get('modifier'))
-    dishes_flat = flatten_yaml(dishes_modified)
-    dishes_flat = fetch_dish_id(dishes_flat, cur)
-    print('The following dish(es) will be modified to match the contents of modify.yaml:')
-    for dish in dishes_flat:
-        print('* {}'.format(dish))
-    confirmation = input('\nProceed? (y/n) > ')
-    if confirmation == 'y':
-        update_db(dishes_flat, conn, cur)
-
-    elif confirmation == 'n':
-        print('Database will not be updated')
-
-    else:
-        print('Please input the letters y or n.')
-
-    conn.close()
-    cur.close()
-    return None
-
-
 def parse_arguments():
     """Executes flow control to check cli flags and run program accordingly"""
     args = parse_command_line()
     for key in args.keys():
         if args.get(key) is not False:
             return {
-                'reader':      func_reader,
-                'writer':      func_writer,
-                'selector':    func_selector,
-                'file':        func_file,
-                'file_writer': func_file_writer,
-                'modifier':    func_modifier
+                'reader':      cook_functions.func_reader,
+                'writer':      cook_functions.func_writer,
+                'selector':    cook_functions.func_selector,
+                'file':        cook_functions.func_file,
+                'file_writer': cook_functions.func_file_writer,
+                'modifier':    cook_functions.func_modifier
                 }.get(key)(args)
     print('Please specify a flag as a command line argument.')
     print('See \"python cooking.py -h\" for additional information.')
