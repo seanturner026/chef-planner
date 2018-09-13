@@ -1,4 +1,4 @@
-Cooking best practice involves planning such that all of your dishes finish at the same time. All of your food will be warm, and you have  time for washing up in otherwise idle moments. 
+Cooking best practice involves planning such that all of your dishes finish at the same time. All of your food will be warm, and you have  time for washing up in otherwise idle moments.
 
 This planning has been automated using Python. The program goes through each dish in the yaml file, reads how long each step requires in minutes, and determines at what points in time each step should be executed. Once all of the calculations are completed, the final instructions are printed to the console. Yaml files can also be imported into a database, and read by the application which eliminates the need to manage the yaml files.
 
@@ -36,15 +36,17 @@ $ python cooking.py -h
 Chef planning assistant
 
 optional arguments:
-  -h, --help         show this help message and exit
-  -f, --file         create cooking plan using a specified yaml file
-  -r, --reader       create cooking plan using dishes.yaml
-  -s, --selector     create cooking plan using recipies existing in the
-                     persistent database
-  -w, --writer       write recipies from dishes.yaml to the persistent
-                     database
-  -fw, -file writer  write recipies from a specified yaml file to the
-                     persistent database
+  -h, --help                 show this help message and exit
+  -f [], --file []           create cooking plan using a specified yaml file
+  -r, --reader               create cooking plan using dishes.yaml
+  -w, --writer               write recipies from dishes.yaml to the persistent
+                             database
+  -s, --selector             create cooking plan using recipies existing in the
+                             persistent database
+  -m [], --modifier []       modify all recipies in the persistent database by the
+                             same name as in a specified yaml file
+  -fw [], --file_writer []   write recipies from a specified yaml file to the
+                             persistent database
 ```
 ```
 $ python cooking.py -r
@@ -58,20 +60,20 @@ Steak (no serving information or ingredients provided)
 
 INSTRUCTIONS:
 
-Pasta: Boil noodles
-» Set timer for 3 minutes
+Set timer for 2 minutes
+» Pasta: Boil noodles
 
-Salad: Make dressing
-Steak: Cook steak
-» Set timer for 12 minutes
+Set timer for 12 minutes
+» Salad: Make dressing
+» Steak: Cook steak
 
-Salad: Toss salad
-» Set timer for 1 minutes
+Set timer for 2 minutes
+» Salad: Toss salad
 
-» Pasta: Mix noodles with sauce
-» Set timer for 3 minutes. All of your dishes should be finished.
+» Set timer for 3 minutes.
+Pasta: Mix noodles with sauce
 
-Enjoy!
+All of your dishes should be finished. Enjoy!
 ```
 ```
 $ python cooking.py -w
@@ -105,14 +107,14 @@ Steak serves 11 (ingredients not provided)
 
 INSTRUCTIONS:
 
-Pasta: Boil noodles
-» Set timer for 3 minutes
+Set timer for 3 minutes
+» Pasta: Boil noodles
 
-Steak: Cook steak
-» Set timer for 13 minutes
+Set timer for 13 minutes
+» Steak: Cook steak
 
-» Pasta: Mix noodles with sauce
-» Set timer for 3 minutes. All of your dishes should be finished.
+» Set timer for 3 minutes.
+Pasta: Mix noodles with sauce
 
-Enjoy!
+All of your dishes should be finished. Enjoy!
 ```
