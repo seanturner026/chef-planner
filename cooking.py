@@ -1,18 +1,19 @@
-"""
-cooking.py reads dishes from a yaml file or database, and prints out ordered instructions
+"""cooking.py reads dishes from a yaml file or database, and prints out ordered instructions
 detailing when to execute each step listed in dishes.yaml so that all dishes will be ready
 at the same point in time
 """
 
 import argparse
 import sys
-import time
+# import time
 
 from ruamel.yaml import YAML
-import cook_functions
+from modules import cook_functions
+
 
 def load_yaml(yaml_file):
     """Load a yaml file containing dishes"""
+    # returns commented dict object
     yaml = YAML()
     with open(yaml_file) as file:
         return yaml.load(file)
@@ -54,8 +55,8 @@ def assign_time(dishes, max_duration_idx, durations):
                     dishes[k][step].append(0)
                 # flow control to select following steps
                 elif isinstance(step, int):
-                    # instantiate variable to hold current point in time after
-                    # all preceeding steps have been executed
+                    # instantiate variable to hold current point in time after all preceeding steps
+                    # have been executed
                     start = dishes[k][step - 1][0] + dishes[k][step-1][2]
                     # write current point in time to current step for current dish
                     dishes[k][step].append(start)
@@ -65,15 +66,14 @@ def assign_time(dishes, max_duration_idx, durations):
             for j, step in enumerate(dishes[k].keys()):
                 # flow control to select the step to execute first
                 if j == 0:
-                    # instantiate variable to hold point in time when the dish
-                    # should be started
+                    # instantiate variable to hold point in time when the dish should be started
                     start = durations[max_duration_idx] - durations[i]
                     # write time to the list for step zero for the current dish
                     dishes[k][step].append(start)
                 # flow control to select following steps
                 elif isinstance(step, int):
-                    # instantiate variable to hold current point in time after
-                    # all preceeding steps have been executed
+                    # instantiate variable to hold current point in time after all preceeding steps
+                    # have been executed
                     start = dishes[k][step - 1][0] + dishes[k][step-1][2]
                     # write current point in time to current step for current dish
                     dishes[k][step].append(start)
@@ -107,13 +107,13 @@ def organise_steps(dishes, max_duration):
         # flow control to see if a particular point in time already exists
         if epoch in epochs_d.keys():
             # increase point in time frequency by one
-            epochs_d.update({epoch:(epochs_d[epoch]+1)})
+            epochs_d.update({epoch: (epochs_d[epoch]+1)})
         else:
             # create specific point in time as a dictionary key
             epochs_d[epoch] = 1
     # add final point in time to epochs
     epochs.append(max_duration)
-    epochs_d.update({max_duration:0})
+    epochs_d.update({max_duration: 0})
 
     return instructions, epochs_d
 
@@ -134,19 +134,19 @@ def concurrency(instructions, epochs_d):
                 # flow control to select steps in order
                 if key == instruction[2]:
                     orders.update({
-                        instruction[3] : [instruction[1], instruction[2], instruction[0]]
+                        instruction[3]: [instruction[1], instruction[2], instruction[0]]
                         })
-            instructions_ordered.update({key:orders})
+            instructions_ordered.update({key: orders})
             continue
 
         for instruction in instructions:
             # flow control to select steps in order
             if key == instruction[2]:
                 # # write step lists to instructions_ordered in order of time
-                instructions_ordered.update({key : {instruction[3] : [instruction[1],
-                                                                      instruction[2],
-                                                                      instruction[0]
-                                                                     ]}})
+                instructions_ordered.update({key: {instruction[3]: [instruction[1],
+                                                                    instruction[2],
+                                                                    instruction[0]
+                                                                    ]}})
     return instructions_ordered
 
 
@@ -161,10 +161,10 @@ def broadcast_details(dishes):
         for k in dishes[dish].keys():
             if k == 'ingredients':
                 # add ingredients as a key with value to dish_details
-                dish_details[dish].update({'ingredients':dishes[dish][k]})
+                dish_details[dish].update({'ingredients': dishes[dish][k]})
             elif k == 'servings':
                 # add servings as a key with value to dish_details
-                dish_details[dish].update({'servings':dishes[dish][k]})
+                dish_details[dish].update({'servings': dishes[dish][k]})
     # iterate through dish_details
     for dish in dish_details:
         # check if no ingredient or serving information is provided
@@ -192,30 +192,56 @@ def broadcast_details(dishes):
     return None
 
 
+def combine_instructions(instructions_ordered, max_duration):
+    """Combine instructions when the time difference between two steps is two minutes or less"""
+    delete = []
+    for i, k in enumerate(instructions_ordered):
+
+        if i + 1 is len(instructions_ordered):
+            break
+        if list(instructions_ordered)[i + 1] - list(instructions_ordered)[i] <= 1:
+            instructions_ordered.update({
+                k: {**instructions_ordered[k],
+                    **instructions_ordered[list(instructions_ordered)[i + 1]]
+                    }
+                })
+            original_time = instructions_ordered[k][list(instructions_ordered[k])[0]][2]
+            for dish in instructions_ordered[k]:
+                instructions_ordered[k][dish][2] = original_time
+            delete.append(list(instructions_ordered)[i + 1])
+
+    for k in delete:
+        del instructions_ordered[k]
+
+    return instructions_ordered
+
+
 def broadcast_instructions(instructions_ordered, max_duration):
     """Print timings for various dishes"""
     print('INSTRUCTIONS:\n')
     # iterate through the dictionary -- outermost keys are points in time
-    for i, current_time in enumerate(instructions_ordered.keys()):
+    for i, current_time in enumerate(instructions_ordered):
         # check that current_time is not the final point in time
-        if current_time != list(instructions_ordered.keys())[-1]:
-            # print the dish name and step given current_time
-            for dish in instructions_ordered[current_time].keys():
-                print('{}: {}'.format(dish, instructions_ordered[current_time][dish][0]))
+        if current_time != list(instructions_ordered)[-1]:
             # print the difference in time between current_time and the next iter of current_time
-            print('» Set timer for {} minutes\n'
-                  .format(list(instructions_ordered.keys())[i + 1] -
-                          list(instructions_ordered.keys())[i]))
-        # check that current_time is the final point in time
-        elif current_time == list(instructions_ordered.keys())[-1]:
+            print('Set timer for {} minutes'
+                  .format(list(instructions_ordered)[i + 1] -
+                          list(instructions_ordered)[i]))
             # print the dish name and step given current_time
-            for dish in instructions_ordered[current_time].keys():
-                print('{}: {}'.format(dish, instructions_ordered[current_time][dish][0]))
+            for dish in instructions_ordered[current_time]:
+                print('» {}: {}'.format(dish, instructions_ordered[current_time][dish][0]))
+                if dish is list(instructions_ordered[current_time])[-1]:
+                    print()
+        # check that current_time is the final point in time
+        elif current_time == list(instructions_ordered)[-1]:
             # print the time until all dishes are ready
-            print('» Set timer for {} minutes. All of your dishes should be finished.'
-                  .format(max_duration - current_time))
+            print('» Set timer for {} minutes.'
+                .format(max_duration - current_time))
+            # print the dish name and step given current_time
+            for dish in instructions_ordered[current_time]:
+                print('{}: {}'.format(dish, instructions_ordered[current_time][dish][0]))
 
-    print('\nEnjoy!')
+    print('\nAll of your dishes should be finished. Enjoy!')
     return None
 
 
@@ -246,7 +272,7 @@ def flatten_yaml(dishes):
     # iterate through dishes
     for dish in dishes.keys():
         # dishes_flat will hold the data from the yaml in a format that the database can take
-        dishes_flat.update({dish : {}})
+        dishes_flat.update({dish: {}})
         dishes_flat[dish].update({'dish_name': dish})
         # instantiate various python objects to hold the corresponding information for each dish
         dish_durations = []
@@ -319,7 +345,7 @@ def fetch_db(cur):
     # iterate through dishes extracted from database
     for i, dish in enumerate(cur.fetchall()):
         # write the extracted dish to the dictionary
-        items.update({i:dish})
+        items.update({i: dish})
     # iterate through extracted dishes and print dish names to the terminal
     for i, _ in enumerate(items):
         print('{:3} {:^4} {}'.format(i, ' ', items[i][1]))
@@ -335,7 +361,7 @@ def fetch_dish_id(dishes_flat, cur):
     for dish in enumerate(cur.fetchall()):
 
         if dish[1][1] in dishes_flat.keys():
-            dishes_flat[dish[1][1]].update({'id' : dish[1][0]})
+            dishes_flat[dish[1][1]].update({'id': dish[1][0]})
 
     return dishes_flat
 
@@ -346,13 +372,13 @@ def update_db(dishes_flat, conn, cur):
 
         cur.execute("""
                     UPDATE dishes
-                    SET duration = %(duration)s,
+                    SET duration =   %(duration)s,
                     total_duration = %(total_duration)s,
-                    instructions = %(instructions)s,
-                    description = %(description)s,
-                    ingredients = %(ingredients)s,
-                    servings = %(servings)s
-                    WHERE id = %(id)s
+                    instructions =   %(instructions)s,
+                    description =    %(description)s,
+                    ingredients =    %(ingredients)s,
+                    servings =       %(servings)s
+                    WHERE id =       %(id)s
                     """,
                     dishes_flat[dish])
 
@@ -374,7 +400,7 @@ def read_db_entries(dishes):
             dishes_dict[entry[0]][i].append(entry[2][i])
             dishes_dict[entry[0]][i].append(entry[3][i])
         dishes_dict[entry[0]].update({'description': entry[4]})
-        dishes_dict[entry[0]].update({'servings': entry[5]})
+        dishes_dict[entry[0]].update({'servings':    entry[5]})
         dishes_dict[entry[0]].update({'ingredients': entry[6]})
 
     return dishes_dict

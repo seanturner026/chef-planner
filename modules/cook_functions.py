@@ -4,6 +4,7 @@ in cooking.py necessary to run the program from start to finish
 """
 
 import functools
+import sys
 
 import psycopg2
 import cooking as ck
@@ -29,6 +30,7 @@ def func_file(args):
           .format(args.get('file'), max_duration))
     dishes = ck.assign_time(dishes, max_duration_idx, durations)
     instructions_ordered = ck.concurrency(*ck.organise_steps(dishes, max_duration))
+    instructions_ordered = ck.combine_instructions(instructions_ordered, max_duration)
     ck.broadcast_details(dishes)
     ck.broadcast_instructions(instructions_ordered, max_duration)
     return None
@@ -43,6 +45,7 @@ def func_reader():
           .format(max_duration))
     dishes = ck.assign_time(dishes, max_duration_idx, durations)
     instructions_ordered = ck.concurrency(*ck.organise_steps(dishes, max_duration))
+    instructions_ordered = ck.combine_instructions(instructions_ordered, max_duration)
     ck.broadcast_details(dishes)
     ck.broadcast_instructions(instructions_ordered, max_duration)
     return None
@@ -57,6 +60,7 @@ def func_writer():
         cur = conn.cursor()
     except psycopg2.OperationalError:
         print('Cannot connect to the database.')
+        sys.exit(0)
     ck.db_duplication_check(dishes, cur)
     print('Writing all dishes from dishes.yaml to the database...')
     ck.write_db_entries(*ck.flatten_yaml(dishes), conn, cur)
@@ -75,6 +79,7 @@ def func_file_writer(args):
         cur = conn.cursor()
     except psycopg2.OperationalError:
         print('Cannot connect to the database.')
+        sys.exit(0)
     ck.db_duplication_check(dishes, cur)
     print('Writing all dishes from {} to the database...'.format(args.get('file_writer')))
     ck.write_db_entries(*ck.flatten_yaml(dishes), conn, cur)
@@ -92,6 +97,7 @@ def func_selector():
         cur = conn.cursor()
     except psycopg2.OperationalError:
         print('Cannot connect to the database.')
+        sys.exit(0)
     print('Select dishes to be prepared:\n')
     print('{} {:^4} {}'.format(' Id', ' ', 'Dish Name'))
     items = ck.fetch_db(cur)
@@ -109,6 +115,7 @@ def func_selector():
           .format((', ').join([dish for dish in selection]), max_duration))
     selection = ck.assign_time(selection, max_duration_idx, durations)
     instructions_ordered = ck.concurrency(*ck.organise_steps(selection, max_duration))
+    instructions_ordered = ck.combine_instructions(instructions_ordered, max_duration)
     ck.broadcast_details(selection)
     ck.broadcast_instructions(instructions_ordered, max_duration)
     conn.close()
@@ -126,6 +133,7 @@ def func_modifier(args):
         cur = conn.cursor()
     except psycopg2.OperationalError:
         print('Cannot connect to the database.')
+        sys.exit(0)
     dishes_modified = ck.load_yaml(args.get('modifier'))
     dishes_flat = ck.flatten_yaml(dishes_modified)
     dishes_flat = ck.fetch_dish_id(dishes_flat, cur)
