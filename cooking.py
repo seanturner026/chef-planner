@@ -170,22 +170,18 @@ def broadcast_details(dishes):
         # check if no ingredient or serving information is provided
         if dish_details[dish]['ingredients'] is None:
             if dish_details[dish]['servings'] is None:
-                print('{} (no serving information or ingredients provided)'
-                      .format(dish))
+                print(f'{dish} (no serving information or ingredients provided)')
             # print serving information only
             else:
-                print('{} serves {} (ingredients not provided)'
-                      .format(dish, dish_details[dish]['servings']))
+                print(f'{dish} serves {dish_details[dish]["servings"]} (ingredients not provided)')
         # print ingredient information only
         elif dish_details[dish]['servings'] is None:
-            print('{} requires the following ingredients (no serving information provided):'
-                  .format(dish))
+            print(f'{dish} requires the following ingredients (no serving information provided):')
             for ingredient in dish_details[dish]['ingredients']:
                 print('*', ingredient)
         # print serving and ingredient information
         else:
-            print('{} serves {}, and requires the following ingredients:'
-                  .format(dish, dish_details[dish]['servings']))
+            print(f'{dish} serves {dish_details[dish]["servings"]}, and requires the following ingredients:')
             for ingredient in dish_details[dish]['ingredients']:
                 print('*', ingredient)
     print()
@@ -224,22 +220,19 @@ def broadcast_instructions(instructions_ordered, max_duration):
         # check that current_time is not the final point in time
         if current_time != list(instructions_ordered)[-1]:
             # print the difference in time between current_time and the next iter of current_time
-            print('Set timer for {} minutes'
-                  .format(list(instructions_ordered)[i + 1] -
-                          list(instructions_ordered)[i]))
+            print(f'Set timer for {list(instructions_ordered)[i + 1] - list(instructions_ordered)[i]} minutes')
             # print the dish name and step given current_time
             for dish in instructions_ordered[current_time]:
-                print('» {}: {}'.format(dish, instructions_ordered[current_time][dish][0]))
+                print(f'» {dish}: {instructions_ordered[current_time][dish][0]}')
                 if dish is list(instructions_ordered[current_time])[-1]:
                     print()
         # check that current_time is the final point in time
         elif current_time == list(instructions_ordered)[-1]:
             # print the time until all dishes are ready
-            print('» Set timer for {} minutes.'
-                .format(max_duration - current_time))
+            print(f'Set timer for {max_duration - current_time} minutes.')
             # print the dish name and step given current_time
             for dish in instructions_ordered[current_time]:
-                print('{}: {}'.format(dish, instructions_ordered[current_time][dish][0]))
+                print(f'» {dish}: {instructions_ordered[current_time][dish][0]}')
 
     print('\nAll of your dishes should be finished. Enjoy!')
     return None
@@ -255,10 +248,9 @@ def db_duplication_check(dishes, cur):
     for dish in cur.fetchall():
         # check if the dish name from the database is the same as in the yaml file
         if dish[0] in dishes.keys():
-            print('{} already exists in the database. Please rename the dish in the yaml file.'
-                  .format(dish[0]))
+            print(f'{dish[0]} already exists in the database. Please rename the dish in the yaml file.')
             sys.exit(0)
-            # print('Would you like to rename {}, exit?'.format(dish[0]))
+            # print(f'Would you like to rename {dish[0]}, exit?')
             # choice = input('rename / exit ')
             # if choice == 'exit':
             #     sys.exit(0)
@@ -332,7 +324,7 @@ def write_db_entries(dishes_flat, conn, cur):
                     """,
                     dishes_flat[dish])
         conn.commit()
-        print('Wrote {} to the database'.format(dishes_flat[dish]['dish_name']))
+        print(f'Wrote {dishes_flat[dish]["dish_name"]} to the database')
     return None
 
 
@@ -384,7 +376,7 @@ def update_db(dishes_flat, conn, cur):
 
         conn.commit()
 
-        print('* {} has been updated in the database'.format(dish))
+        print(f'* {dish} has been updated in the database')
     print('\nDone!')
     return None
 

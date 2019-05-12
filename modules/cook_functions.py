@@ -26,8 +26,7 @@ def func_file(args):
     """Calls function necessary to read a given yaml and produce the cooking plan"""
     dishes = ck.load_yaml(args.get('file'))
     durations, max_duration, max_duration_idx = ck.get_durations(dishes)
-    print('Reading all dishes from {}. Your meal will require {} minutes to prepare.\n'
-          .format(args.get('file'), max_duration))
+    print(f'Reading all dishes from {args.get("file")}. Your meal will require {max_duration} minutes to prepare.\n')
     dishes = ck.assign_time(dishes, max_duration_idx, durations)
     instructions_ordered = ck.concurrency(*ck.organise_steps(dishes, max_duration))
     instructions_ordered = ck.combine_instructions(instructions_ordered, max_duration)
@@ -41,8 +40,7 @@ def func_reader():
     """Calls functions necessary to read dishes.yaml and produce the cooking plan"""
     dishes = ck.load_yaml('dishes.yaml')
     durations, max_duration, max_duration_idx = ck.get_durations(dishes)
-    print('Reading all dishes from dishes.yaml. Your meal will require {} minutes to prep.\n'
-          .format(max_duration))
+    print(f'Reading all dishes from dishes.yaml. Your meal will require {max_duration} minutes to prep.\n')
     dishes = ck.assign_time(dishes, max_duration_idx, durations)
     instructions_ordered = ck.concurrency(*ck.organise_steps(dishes, max_duration))
     instructions_ordered = ck.combine_instructions(instructions_ordered, max_duration)
@@ -81,7 +79,7 @@ def func_file_writer(args):
         print('Cannot connect to the database.')
         sys.exit(0)
     ck.db_duplication_check(dishes, cur)
-    print('Writing all dishes from {} to the database...'.format(args.get('file_writer')))
+    print(f'Writing all dishes from {args.get("file_writer")} to the database...')
     ck.write_db_entries(*ck.flatten_yaml(dishes), conn, cur)
     print('\nDone!')
     conn.close()
@@ -111,8 +109,7 @@ def func_selector():
             selection[i] = [item for item in selection[i]]
     selection = ck.read_db_entries(selection)
     durations, max_duration, max_duration_idx = ck.get_durations(selection)
-    print('\nPreparing {}. Your meal will require {} minutes to prepare.\n'
-          .format((', ').join([dish for dish in selection]), max_duration))
+    print(f'\nPreparing {(", ").join([dish for dish in selection])}. Your meal will require {max_duration} minutes to prepare.\n')
     selection = ck.assign_time(selection, max_duration_idx, durations)
     instructions_ordered = ck.concurrency(*ck.organise_steps(selection, max_duration))
     instructions_ordered = ck.combine_instructions(instructions_ordered, max_duration)
@@ -139,7 +136,7 @@ def func_modifier(args):
     dishes_flat = ck.fetch_dish_id(dishes_flat, cur)
     print('The following dish(es) will be modified to match the contents of modify.yaml:')
     for dish in dishes_flat:
-        print('* {}'.format(dish))
+        print(f'* {dish}')
     confirmation = input('\nProceed? (y/n) > ')
     if confirmation == 'y':
         ck.update_db(dishes_flat, conn, cur)
