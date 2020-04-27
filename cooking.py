@@ -1,7 +1,137 @@
+import collections
 import sys
 
 import click
 from modules import cook_functions
+
+
+class Dish:
+    """
+    pass
+    """
+
+    def __init__(
+        self,
+        dish_name: str,
+        description: str,
+        ingredients: list(dict({"ingredient": str, "quantity_with_units": str})),
+        servings: int,
+        steps: dict({int: dict({"duration": int, "instruction": str})}),
+    ):
+        """
+        pass
+        """
+        self.dish = {}
+        self.dish_name = dish_name
+        self.description = description
+        self.ingredients = ingredients
+        self.servings = servings
+        self.steps = steps
+        self.total_duration = 0
+
+    def validate_length(self, obj: str, length: int, message: str):
+        """
+        pass
+        """
+        if len(obj) > length:
+            sys.exit(f"{message}")
+
+    def validate_dish_name(self):
+        """
+        pass
+        """
+        for num in "0123456789":
+            if num in self.dish_name:
+                sys.exit("Dish names cannot contain numbers")
+        self.validate_length(
+            obj=self.dish_name,
+            length=60,
+            message=f"Please use a shorter name for {self.dish_name}",
+        )
+
+    def validate_description(self):
+        """
+        pass
+        """
+        pass
+
+    def validate_ingredients(self):
+        """
+        pass
+        """
+        for ingredient_dict in self.ingredients:
+            for k in ingredient_dict.keys():
+                if k not in ["ingredient", "quantity_with_units"]:
+                    sys.exit("Please fix the schema of the passed ingredients")
+                if type(ingredient_dict["ingredient"]) != str:
+                    sys.exit(
+                        f"Please specify strings for ingredients of {ingredient_dict[k]}"
+                    )
+            self.validate_length(
+                obj=ingredient_dict["ingredient"],
+                length=30,
+                message=f"Please us a shorter name for ingredient {ingredient_dict['ingredient']} in {self.dish_name}",
+            )
+
+    def validate_servings(self):
+        """
+        pass
+        """
+        pass
+
+    def validate_steps(self):
+        """
+        pass
+        """
+        self.validate_length(
+            obj=self.steps.keys(), length=30, message=f"Please use fewer steps for"
+        )
+        for step_num in self.steps:
+            self.validate_length(
+                obj=self.steps[step_num]["instruction"],
+                length=500,
+                message=f"Please use fewer steps for in {self.dish_name}",
+            )
+            if self.steps[step_num]["duration"] <= 0:
+                sys.exit(
+                    f"Please use a positive number in minutes as duration for step {step_num} in {self.dish_name}"
+                )
+
+    def validate_dish(self):
+        """
+        pass
+        """
+        self.validate_dish_name()
+        self.validate_description()
+        self.validate_ingredients()
+        self.validate_servings()
+        self.validate_steps()
+
+    def write_total_duration(self):
+        """
+        pass
+        """
+        for step_num in self.steps:
+            self.total_duration += self.steps[step_num]["duration"]
+
+    def construct_dish(self):
+        """
+        pass
+        """
+        self.validate_dish()
+        self.write_total_duration()
+        self.dish.update(
+            {
+                self.dish_name: {
+                    "description": self.description,
+                    "ingredients": self.ingredients,
+                    "servings": self.servings,
+                    "start_time": 0,
+                    "steps": self.steps,
+                    "total_duration": self.total_duration,
+                }
+            }
+        )
 
 
 class Organizer:
@@ -10,7 +140,7 @@ class Organizer:
     """
 
     def __init__(self):
-        self.dishes = {}  # Dish()
+        self.dishes = {}
         self.durations = []
         self.epochs = {}
         self.instructions = []
@@ -18,366 +148,147 @@ class Organizer:
         self.max_duration = 0
         self.max_duration_idx = 0
 
-    def get_durations(self):
-        """
-        Generates a list which contains calculations of the total time required
-        for each dish
-        """
-        for dish in self.dishes.keys():
-            total_duration = 0
-            for step in self.dishes[dish].keys():
-                if isinstance(step, int):
-                    total_duration += self.dishes[dish][step][0]
-            self.durations.append(total_duration)
-            self.max_duration = max(self.durations)
-            self.max_duration_idx = [
-                i for i, v in enumerate(self.durations) if v == self.max_duration
-            ][0]
-
     def assign_time(self):
         """
         Append start times to each dish
         """
-        for i, k in enumerate(self.dishes.keys()):
-            if i == self.max_duration_idx:
-                for j, step in enumerate(self.dishes[k].keys()):
-                    if j == 0:
-                        self.dishes[k][step].append(0)
-                    elif isinstance(step, int):
-                        start = (
-                            self.dishes[k][step - 1][0] + self.dishes[k][step - 1][2]
-                        )
-                        self.dishes[k][step].append(start)
-            else:
-                for j, step in enumerate(self.dishes[k].keys()):
-                    if j == 0:
-                        start = (
-                            self.durations[self.max_duration_idx] - self.durations[i]
-                        )
-                        self.dishes[k][step].append(start)
-                    elif isinstance(step, int):
-                        start = (
-                            self.dishes[k][step - 1][0] + self.dishes[k][step - 1][2]
-                        )
-                        self.dishes[k][step].append(start)
-
-    def organize_steps(self):
-        """
-        Instantiate list to hold all step details (duration, instruction, point in time) and list to
-        hold points in time that require action
-        """
-        epochs_list = []
-        for dish in self.dishes.keys():
-            for step in self.dishes[dish].keys():
-                if isinstance(step, int):
-                    self.instructions.append(self.dishes[dish][step])
-                    self.instructions[-1].append(dish)
-                    epochs_list.append(self.dishes[dish][step][2])
-        epochs_list = sorted(epochs_list)
-        for epoch in epochs_list:
-            if epoch in self.epochs.keys():
-                self.epochs.update({epoch: (self.epochs[epoch] + 1)})
-            else:
-                self.epochs.update({epoch: 1})
-        epochs_list.append(self.max_duration)
-        self.epochs.update({"max_duration": 0})
-
-    def concurrency(self):
-        """
-        Read output generated by organise_steps function and handle points in time which require
-        more than one action
-        """
-        for key in self.epochs.keys():
-            if self.epochs[key] > 1:
-                orders = {}
-                for instruction in self.instructions:
-                    if key == instruction[2]:
-                        orders.update(
-                            {
-                                instruction[3]: [
-                                    instruction[1],
-                                    instruction[2],
-                                    instruction[0],
-                                ]
-                            }
-                        )
-                self.instructions_ordered.update({key: orders})
-            for instruction in self.instructions:
-                if key == instruction[2]:
-                    self.instructions_ordered.update(
-                        {
-                            key: {
-                                instruction[3]: [
-                                    instruction[1],
-                                    instruction[2],
-                                    instruction[0],
-                                ]
-                            }
-                        }
-                    )
-
-    def broadcast_details(self):
-        """
-        Print the ingredients and servings required to produce the various dishes
-
-        Format of dish_details:
-        {
-            "Pasta": {"ingredients": ["16 oz noodles", "1 jar pesto"], "servings": 4},
-            "Salad": {"ingredients": None, "servings": 3},
-            "Steak": {"ingredients": None, "servings": None},
-        }
-        """
-        dish_details = {}
-        for dish in self.dishes.keys():
-            dish_details.update({dish: {}})
-            for k in self.dishes[dish].keys():
-                if k == "ingredients":
-                    dish_details[dish].update({"ingredients": self.dishes[dish][k]})
-                elif k == "servings":
-                    dish_details[dish].update({"servings": self.dishes[dish][k]})
-        for dish in dish_details:
-            if dish_details[dish]["ingredients"] is None:
-                if dish_details[dish]["servings"] is None:
-                    print(f"{dish} (no serving information or ingredients provided)")
-                else:
-                    print(
-                        f'{dish} serves {dish_details[dish]["servings"]} (ingredients not provided)'
-                    )
-            elif dish_details[dish]["servings"] is None:
-                print(
-                    f"{dish} requires the following ingredients (no serving information provided):"
+        for plate in self.dishes.keys():
+            if self.dishes[plate]["total_duration"] != self.max_duration:
+                self.dishes[plate]["start_time"] = (
+                    self.max_duration - self.dishes[plate]["total_duration"]
                 )
-                for ingredient in dish_details[dish]["ingredients"]:
-                    print("*", ingredient)
+
+        for plate in self.dishes.keys():
+            start_time = self.dishes[plate]["start_time"]
+            if start_time not in self.epochs.keys():
+                self.epochs[start_time] = {}
             else:
-                print(
-                    f"{dish} serves {dish_details[dish]['servings']}, and requires the following ingredients:"
-                )
-                for ingredient in dish_details[dish]["ingredients"]:
-                    print("*", ingredient)
-        print()
-
-    def combine_instructions(self):
-        """
-        Combine instructions when the time difference between two steps is two minutes or less
-        """
-        delete = []
-        for i, k in enumerate(self.instructions_ordered):
-
-            if i + 1 is len(self.instructions_ordered):
-                break
-            if (
-                list(self.instructions_ordered)[i + 1]
-                - list(self.instructions_ordered)[i]
-                <= 1
-            ):
-                self.instructions_ordered.update(
-                    {
-                        k: {
-                            **self.instructions_ordered[k],
-                            **self.instructions_ordered[
-                                list(self.instructions_ordered)[i + 1]
-                            ],
-                        }
+                existing_step = self.epochs[start_time]
+            self.epochs[start_time].update(
+                {
+                    plate: {
+                        "instruction": self.dishes[plate]["steps"][0]["instruction"],
+                        "duration": self.dishes[plate]["steps"][0]["duration"],
                     }
-                )
-                original_time = self.instructions_ordered[k][
-                    list(self.instructions_ordered[k])[0]
-                ][2]
-                for dish in self.instructions_ordered[k]:
-                    self.instructions_ordered[k][dish][2] = original_time
-                delete.append(list(self.instructions_ordered)[i + 1])
+                }
+            )
 
-        for k in delete:
-            del self.instructions_ordered[k]
+            for idx, step in enumerate(self.dishes[plate]["steps"]):
+                if step != 0:
+                    point_in_time = (
+                        self.dishes[plate]["start_time"]
+                        + self.dishes[plate]["steps"][idx - 1]["duration"]
+                    )
+                    if point_in_time not in self.epochs.keys():
+                        self.epochs[point_in_time] = {}
+                    self.epochs[point_in_time].update(
+                        {
+                            plate: {
+                                "instruction": self.dishes[plate]["steps"][idx][
+                                    "instruction"
+                                ],
+                                "duration": self.dishes[plate]["steps"][idx][
+                                    "duration"
+                                ],
+                            }
+                        }
+                    )
+        self.epochs = collections.OrderedDict(sorted(self.epochs.items()))
+
+    # def broadcast_details(self):
+    #     """
+    #     Print the ingredients and servings required to produce the various dishes
+
+    #     Format of dish_details:
+    #     {
+    #         "Pasta": {"ingredients": ["16 oz noodles", "1 jar pesto"], "servings": 4},
+    #         "Salad": {"ingredients": None, "servings": 3},
+    #         "Steak": {"ingredients": None, "servings": None},
+    #     }
+    #     """
+    #     for dish in self.dishes.keys():
+    #         dish_details.update({dish: {}})
+    #         for k in self.dishes[dish].keys():
+    #             if k == "ingredients":
+    #                 dish_details[dish].update({"ingredients": self.dishes[dish][k]})
+    #             elif k == "servings":
+    #                 dish_details[dish].update({"servings": self.dishes[dish][k]})
+    #     for dish in dish_details:
+    #         if dish_details[dish]["ingredients"] is None:
+    #             if dish_details[dish]["servings"] is None:
+    #                 print(f"{dish} (no serving information or ingredients provided)")
+    #             else:
+    #                 print(
+    #                     f'{dish} serves {dish_details[dish]["servings"]} (ingredients not provided)'
+    #                 )
+    #         elif dish_details[dish]["servings"] is None:
+    #             print(
+    #                 f"{dish} requires the following ingredients (no serving information provided):"
+    #             )
+    #             for ingredient in dish_details[dish]["ingredients"]:
+    #                 print("*", ingredient)
+    #         else:
+    #             print(
+    #                 f"{dish} serves {dish_details[dish]['servings']}, and requires the following ingredients:"
+    #             )
+    #             for ingredient in dish_details[dish]["ingredients"]:
+    #                 print("*", ingredient)
+    #     print()
+
+    # def combine_instructions(self):
+    #     """
+    #     Combine instructions when the time difference between two steps is two minutes or less
+    #     """
+    #     delete = []
+    #     for i, k in enumerate(self.instructions_ordered):
+
+    #         if i + 1 is len(self.instructions_ordered):
+    #             break
+    #         if (
+    #             list(self.instructions_ordered)[i + 1]
+    #             - list(self.instructions_ordered)[i]
+    #             <= 1
+    #         ):
+    #             self.instructions_ordered.update(
+    #                 {
+    #                     k: {
+    #                         **self.instructions_ordered[k],
+    #                         **self.instructions_ordered[
+    #                             list(self.instructions_ordered)[i + 1]
+    #                         ],
+    #                     }
+    #                 }
+    #             )
+    #             original_time = self.instructions_ordered[k][
+    #                 list(self.instructions_ordered[k])[0]
+    #             ][2]
+    #             for dish in self.instructions_ordered[k]:
+    #                 self.instructions_ordered[k][dish][2] = original_time
+    #             delete.append(list(self.instructions_ordered)[i + 1])
+
+    #     for k in delete:
+    #         del self.instructions_ordered[k]
 
     def broadcast_instructions(self):
         """
         Print timings for various dishes
         """
         print("INSTRUCTIONS:\n")
-        for i, current_time in enumerate(self.instructions_ordered):
-            if current_time != list(self.instructions_ordered)[-1]:
+        for idx, current_time in enumerate(self.epochs):
+            points_in_time = list(self.epochs.keys())
+            if current_time != points_in_time[-1]:
                 print(
-                    f"Set timer for {list(self.instructions_ordered)[i + 1] - list(self.instructions_ordered)[i]} minutes"
+                    f"Set timer for {points_in_time[idx + 1] - points_in_time[idx]} minutes"
                 )
-                for dish in self.instructions_ordered[current_time]:
-                    print(
-                        f"» {dish}: {self.instructions_ordered[current_time][dish][0]}"
-                    )
-                    if dish is list(self.instructions_ordered[current_time])[-1]:
+                for dish in self.epochs[current_time]:
+                    print(f"» {dish}: {self.epochs[current_time][dish]['instruction']}")
+                    if dish is list(self.epochs[current_time])[-1]:
                         print()
-            elif current_time == list(self.instructions_ordered)[-1]:
+            else:
                 print(f"Set timer for {self.max_duration - current_time} minutes.")
-                for dish in self.instructions_ordered[current_time]:
-                    print(
-                        f"» {dish}: {self.instructions_ordered[current_time][dish][0]}"
-                    )
+                for dish in self.epochs[current_time]:
+                    print(f"» {dish}: {self.epochs[current_time][dish]['instruction']}")
         print("\nAll of your dishes should be finished. Enjoy!")
-
-    def db_duplication_check(dishes, cur):
-        """Check the database for duplicate dish names, and prevent duplicates from being entered into
-        the database
-        """
-        # extract all dish names from the database as an iterable
-        cur.execute("SELECT dish FROM dishes")
-        # iterate through database extraction
-        for dish in cur.fetchall():
-            # check if the dish name from the database is the same as in the yaml file
-            if dish[0] in dishes.keys():
-                print(
-                    f"{dish[0]} already exists in the database. Please rename the dish in the yaml file."
-                )
-                sys.exit(0)
-                # print(f'Would you like to rename {dish[0]}, exit?')
-                # choice = input('rename / exit ')
-                # if choice == 'exit':
-                #     sys.exit(0)
-                # else:
-        return None
-
-
-def flatten_yaml(dishes):
-    """Flatten each dish from the yaml into a dictionary which can be entered into the database"""
-    dishes_flat = {}
-    # iterate through dishes
-    for dish in dishes.keys():
-        # dishes_flat will hold the data from the yaml in a format that the database can take
-        dishes_flat.update({dish: {}})
-        dishes_flat[dish].update({"dish_name": dish})
-        # instantiate various python objects to hold the corresponding information for each dish
-        dish_durations = []
-        dish_instructions = []
-        dish_ingredients = []
-        dish_servings = 0
-        dish_total_duration = 0
-        # iterate through the keys for each dish in dishes
-        for step in dishes[dish].keys():
-            # check if the key is an integer -- the associated values are lists containing
-            # [step_duration, step_instruction]
-            if isinstance(step, int):
-                # write step_duration to dish_durations
-                dish_durations.append(dishes[dish][step][0])
-                # write step_instruction to dish_instructions
-                dish_instructions.append(dishes[dish][step][1])
-                # add step_duration to dish_total_duration
-                dish_total_duration += dishes[dish][step][0]
-            # check if the key is description
-            elif step == "description":
-                # write the description for the current dish to dish_description
-                dish_description = dishes[dish][step]
-            elif step == "ingredients":
-                dish_ingredients = dishes[dish][step]
-            elif step == "servings":
-                dish_servings = dishes[dish][step]
-        # write all objects to dishes_flat
-        dishes_flat[dish].update({"dish_name": dish})
-        dishes_flat[dish].update({"duration": dish_durations})
-        dishes_flat[dish].update({"total_duration": dish_total_duration})
-        dishes_flat[dish].update({"instructions": dish_instructions})
-        dishes_flat[dish].update({"description": dish_description})
-        dishes_flat[dish].update({"ingredients": dish_ingredients})
-        dishes_flat[dish].update({"servings": dish_servings})
-
-    return dishes_flat
-
-
-def write_db_entries(dishes_flat, conn, cur):
-    """Iterate through the flattened dictionary and enter it into the database"""
-    for dish in dishes_flat.keys():
-        cur.execute(
-            """
-                    INSERT INTO dishes (dish,
-                                        duration,
-                                        total_duration,
-                                        instructions,
-                                        description,
-                                        ingredients,
-                                        servings)
-                    VALUES(%(dish_name)s,
-                           %(duration)s,
-                           %(total_duration)s,
-                           %(instructions)s,
-                           %(description)s,
-                           %(ingredients)s,
-                           %(servings)s)
-                    """,
-            dishes_flat[dish],
-        )
-        conn.commit()
-        print(f'Wrote {dishes_flat[dish]["dish_name"]} to the database')
-    return None
-
-
-def fetch_db(cur):
-    """Collect all database entries and print the dish id and dish name to the console"""
-    # instantiate empty dictionary to hold database extraction
-    items = {}
-    # extract all dishes from the database as an iterable
-    cur.execute("SELECT * FROM dishes")
-    # iterate through dishes extracted from database
-    for i, dish in enumerate(cur.fetchall()):
-        # write the extracted dish to the dictionary
-        items.update({i: dish})
-    # iterate through extracted dishes and print dish names to the terminal
-    for i, _ in enumerate(items):
-        print("{:3} {:^4} {}".format(i, " ", items[i][1]))
-
-    return items
-
-
-# def fetch_dish_id(dishes_flat, cur):
-#     """Appends dish id from database to flattened yaml"""
-#     # extract all dishes from the database as an iterable
-#     cur.execute("SELECT * FROM dishes")
-#     # iterate through dishes extracted from database
-#     for dish in enumerate(cur.fetchall()):
-
-#         if dish[1][1] in dishes_flat.keys():
-#             dishes_flat[dish[1][1]].update({'id': dish[1][0]})
-
-#     return dishes_flat
-
-
-#     def update_db(dishes_flat, conn, cur):
-#         """Modifies existing database entry indexed by dish id"""
-#         for dish in dishes_flat.keys():
-
-#             cur.execute("""
-#                         UPDATE dishes
-#                         SET duration =   %(duration)s,
-#                         total_duration = %(total_duration)s,
-#                         instructions =   %(instructions)s,
-#                         description =    %(description)s,
-#                         ingredients =    %(ingredients)s,
-#                         servings =       %(servings)s
-#                         WHERE id =       %(id)s
-#                         """,
-#                         dishes_flat[dish])
-
-#             conn.commit()
-
-#             print(f'* {dish} has been updated in the database')
-#         print('\nDone!')
-#         return None
-
-
-#     def read_db_entries(dishes):
-#         """Combine all tuples produced by database query back into format resembling dishes.yaml"""
-#         dishes_dict = {}
-#         for entry in dishes:
-#             dishes_dict.update({entry[0]: {}})
-
-#             for i, _ in enumerate(entry[3]):
-#                 dishes_dict[entry[0]].update({i: []})
-#                 dishes_dict[entry[0]][i].append(entry[2][i])
-#                 dishes_dict[entry[0]][i].append(entry[3][i])
-#             dishes_dict[entry[0]].update({'description': entry[4]})
-#             dishes_dict[entry[0]].update({'servings':    entry[5]})
-#             dishes_dict[entry[0]].update({'ingredients': entry[6]})
-
-#         return dishes_dict
-
 
 def parse_arguments(dish_file, reader, writer, selector, modifier, file_writer):
     """Executes flow control to check cli flags and run program accordingly"""

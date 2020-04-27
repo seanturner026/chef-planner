@@ -8,20 +8,14 @@ import sys
 
 import cooking
 import psycopg2
-from ruamel.yaml import YAML
+from yaml import safe_load
 
-
-class YamlReader:
-    def __init__(self):
-        self.yaml = YAML()
-
-    def load_yaml(self, yaml_file):
-        """
-        Takes a yaml file and loads the file into memory
-        """
-        with open(yaml_file) as yaml:
-            return self.yaml.load(yaml)
-
+def load_yaml(yaml_file):
+    """
+    Takes a yaml file and loads the file into memory
+    """
+    with open(yaml_file) as yaml:
+        return safe_load(yaml)
 
 def switch_decorator(func):
     """Flow control which passes args to decorated function"""
@@ -35,14 +29,13 @@ def switch_decorator(func):
 
     return wrapper
 
-
 @switch_decorator
 def func_dish_file(args):
     """
     Calls function necessary to read a given yaml and produce the cooking plan
     """
     organizer = cooking.Organizer()
-    organizer.dishes = YamlReader().load_yaml(args.get("file"))
+    organizer.dishes = load_yaml(args.get("file"))
     organizer.get_durations()
     print(
         f'Reading all dishes from {args.get("file")}. Your meal will require {organizer.max_duration} minutes to prepare.\n'
@@ -61,16 +54,25 @@ def func_reader():
     Calls functions necessary to read dishes.yaml and produce the cooking plan
     """
     organizer = cooking.Organizer()
-    organizer.dishes = YamlReader().load_yaml("dishes.yaml")
-    organizer.get_durations()
+    yaml_dishes = YamlReader().load_yaml("dishes.yaml")
+    organizer = cooking.Organizer()
+    for plate in yaml_dishes:
+        dish = cooking.Dish(
+            dish_name=plate,
+            description=yaml_dishes[plate]["description"],
+            ingredients=yaml_dishes[plate]["ingredients"],
+            servings=yaml_dishes[plate]["servings"],
+            steps=yaml_dishes[plate]["steps"],
+        )
+        dish.construct_dish()
+        organizer.dishes.update(dish.dish)
+        if dish.dish[plate]["total_duration"] > organizer.max_duration:
+            organizer.max_duration = dish.dish[plate]["total_duration"]
     print(
         f"Reading all dishes from dishes.yaml. Your meal will require {organizer.max_duration} minutes to prep.\n"
     )
     organizer.assign_time()
-    organizer.organize_steps()
-    organizer.concurrency()
-    organizer.combine_instructions()
-    organizer.broadcast_details()
+    # organizer.broadcast_details()
     organizer.broadcast_instructions()
 
 

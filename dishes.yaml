@@ -1,32 +1,42 @@
 ---
-Pasta:
-  0:
-    - 16
-    - "Boil noodles"
-  1:
-    - 3
-    - "Mix noodles with sauce"
-  description: "delish pasta"
-  ingredients:
-    - "16 oz noodles"
-    - 1 jar pesto'
-  servings: 4
 
 Salad:
-  0:
-    - 12
-    - "Make dressing"
-  1:
-    - 4
-    - "Toss salad"
-  description: null
-  ingredients: null
+  steps:
+    0:
+      duration: 12
+      instruction: Make dressing
+    1:
+      duration: 4
+      instruction: Toss salad
+  description: "some salad"
+  ingredients:
+    - ingredient: salad
+      quantity_with_units: 1 bag
   servings: 3
 
+Pasta:
+  steps:
+    0:
+      duration: 16
+      instruction: Boil noodles
+    1:
+      duration: 3
+      instruction: Mix noodles with sauce
+  description: "delish pasta"
+  ingredients:
+    - ingredient: noodles
+      quantity_with_units: 16 oz
+    - ingredient: pesto
+      quantity_with_units: 1 jar
+  servings: 4
+
 Steak:
-  0:
-    - 16
-    - "Cook steak"
-  description: null
-  ingredients: null
-  servings: null
+  steps:
+    0:
+      duration: 16
+      instruction: Cook steak
+  description: "STEAK"
+  ingredients:
+    - ingredient: ny strip
+      quantity_with_units: 1 kg
+  servings: 4
