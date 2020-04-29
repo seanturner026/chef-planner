@@ -1,6 +1,9 @@
----
-
 Salad:
+  description: "some salad"
+  ingredients:
+    - ingredient: salad
+      quantity_with_units: 1 bag
+  servings: 3
   steps:
     0:
       duration: 12
@@ -8,20 +11,8 @@ Salad:
     1:
       duration: 4
       instruction: Toss salad
-  description: "some salad"
-  ingredients:
-    - ingredient: salad
-      quantity_with_units: 1 bag
-  servings: 3
 
 Pasta:
-  steps:
-    0:
-      duration: 16
-      instruction: Boil noodles
-    1:
-      duration: 3
-      instruction: Mix noodles with sauce
   description: "delish pasta"
   ingredients:
     - ingredient: noodles
@@ -29,14 +20,21 @@ Pasta:
     - ingredient: pesto
       quantity_with_units: 1 jar
   servings: 4
-
-Steak:
   steps:
     0:
       duration: 16
-      instruction: Cook steak
+      instruction: Boil noodles
+    1:
+      duration: 3
+      instruction: Mix noodles with sauce
+
+Steak:
   description: "STEAK"
   ingredients:
     - ingredient: ny strip
       quantity_with_units: 1 kg
   servings: 4
+  steps:
+    0:
+      duration: 16
+      instruction: Cook steak
