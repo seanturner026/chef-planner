@@ -46,14 +46,14 @@ class Dish:
         self.steps = steps
         self.total_duration = 0
 
-    def validate_length(self, obj: str, length: int, message: str):
+    def validate_length(self, obj: str, length: int, message: str) -> None:
         """
         Ensure that length does not exceed a specified maximum
         """
         if len(obj) > length:
             sys.exit(f"{message}")
 
-    def validate_dish_name(self):
+    def validate_dish_name(self) -> None:
         """
         Ensure that self.dish_name does not contain numbers, and is not greater than 60 characters
         """
@@ -66,12 +66,12 @@ class Dish:
             message=f"Please use a shorter name for {self.dish_name}",
         )
 
-    def validate_description(self):
+    def validate_description(self) -> None:
         """
         Ensure that self.description is not greater than __ characters
         """
 
-    def validate_ingredients(self):
+    def validate_ingredients(self) -> None:
         """
         Ensure that each dictionary in self.ingredients respects the defined schema, and also
         ensure that an ingredient's name does not exceed 30 characters
@@ -91,14 +91,14 @@ class Dish:
                 f"in {self.dish_name}",
             )
 
-    def validate_servings(self):
+    def validate_servings(self) -> None:
         """
         Ensure that self.servings is an integer
         """
         if not isinstance(self.servings, int):
             sys.exit(f"Please specify an integer for servings in {self.dish_name}")
 
-    def validate_steps(self):
+    def validate_steps(self) -> None:
         """
         Ensure that self.steps does not contain more than 30 steps, that each step's length does
         not exceed 500 characters, and that a positive integer is pass for each step's duration
@@ -120,7 +120,7 @@ class Dish:
                     f"{self.dish_name}"
                 )
 
-    def validate_dish(self):
+    def validate_dish(self) -> None:
         """
         Call all validate functions to ensure self.dish respects the schema
         """
@@ -130,14 +130,14 @@ class Dish:
         self.validate_servings()
         self.validate_steps()
 
-    def write_total_duration(self):
+    def write_total_duration(self) -> None:
         """
         Sum up all steps to determine how long self.dish will take to produce
         """
         for step_num in self.steps:
             self.total_duration += self.steps[step_num]["duration"]
 
-    def construct_dish(self):
+    def construct_dish(self) -> None:
         """
         Call all functions to combine all attributes into self.dish
         """

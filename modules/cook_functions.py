@@ -11,7 +11,7 @@ import cooking
 from modules import dish
 
 
-def load_yaml(yaml_file):
+def load_yaml(yaml_file) -> dict:
     """
     Takes a yaml file and loads the file into memory
     """
@@ -19,23 +19,7 @@ def load_yaml(yaml_file):
         return safe_load(yaml)
 
 
-def switch_decorator(func):
-    """
-    Flow control which passes args to decorated function
-    """
-
-    @functools.wraps(func)
-    def wrapper(args):
-        """Provides arguments to decorated function if needed"""
-        if func.__name__ in ["func_dish_file", "func_file_writer", "func_modifier"]:
-            return func(args)
-        return func()
-
-    return wrapper
-
-
-@switch_decorator
-def func_reader():
+def func_reader() -> None:
     """
     Calls functions necessary to read dishes.yaml and produce the cooking plan
     """
@@ -64,22 +48,19 @@ def func_reader():
     organizer.broadcast_instructions()
 
 
-@switch_decorator
-def func_writer():
+def func_writer() -> None:
     """
     Calls functions necessary to write any dishes from dishes.yaml to DynamoDB
     """
 
 
-@switch_decorator
-def func_selector():
+def func_selector() -> None:
     """
     Calls functions necessary to select dishes from DynamoDB and output the cooking plan
     """
 
 
-@switch_decorator
-def func_modifier(args):
+def func_modifier() -> None:
     """
     Calls all functions necessary to modifies dishes in DynamoDB to reflect the dishes with
     the same name in the given yaml file
