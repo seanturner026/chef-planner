@@ -75,7 +75,7 @@ class Organizer:
         self.epochs = {}
         self.max_duration = 0
 
-    def assign_start_time(self):
+    def assign_start_time(self) -> None:
         """
         Append start times to each dish based on what other dishes are being made, and write start
         times to epochs.
@@ -97,27 +97,27 @@ class Organizer:
                 }
             )
 
-    def assign_actions(self):
+    def assign_actions(self) -> None:
         """
         Parse dishes and populate epochs with points in time that completes instructions for all
         dishes.
         """
         for plate in self.dishes:
-            for idx, step in enumerate(self.dishes[plate]["steps"]):
+            for step in self.dishes[plate]["steps"]:
                 if step != 0:
                     point_in_time = (
                         self.dishes[plate]["start_time"]
-                        + self.dishes[plate]["steps"][idx - 1]["duration"]
+                        + self.dishes[plate]["steps"][step - 1]["duration"]
                     )
                     if point_in_time not in self.epochs.keys():
                         self.epochs[point_in_time] = {}
                     self.epochs[point_in_time].update(
                         {
                             plate: {
-                                "instruction": self.dishes[plate]["steps"][idx][
+                                "instruction": self.dishes[plate]["steps"][step][
                                     "instruction"
                                 ],
-                                "duration": self.dishes[plate]["steps"][idx][
+                                "duration": self.dishes[plate]["steps"][step][
                                     "duration"
                                 ],
                             }
@@ -125,7 +125,7 @@ class Organizer:
                     )
         self.epochs = collections.OrderedDict(sorted(self.epochs.items()))
 
-    def broadcast_details(self):
+    def broadcast_details(self) -> None:
         """
         Print the ingredients and servings required to produce the various dishes
         """
@@ -141,7 +141,7 @@ class Organizer:
                 )
         print()
 
-    def broadcast_instructions(self):
+    def broadcast_instructions(self) -> None:
         """
         Print timings for various dishes
         """
@@ -163,66 +163,85 @@ class Organizer:
         print("\nAll of your dishes should be finished. Enjoy!")
 
 
-def parse_arguments(reader, writer, selector, modifier):
+def parse_arguments(
+    modifier: str or None,
+    reader: str or None,
+    selector: str or None,
+    writer: str or None,
+) -> None:
     """
-    Executes flow control to check cli flags and run program accordingly
+    Executes flow control to check commandline flag and run program accordingly
     """
-    args = dict(
-        {
-            "reader": reader,
-            "writer": writer,
-            "selector": selector,
-            "modifier": modifier,
-        }
-    )
-    for key in args:
-        if args.get(key) is not False:
-            return {
-                "reader": cook_functions.func_reader,
-                "writer": cook_functions.func_writer,
-                "selector": cook_functions.func_selector,
-                "modifier": cook_functions.func_modifier,
-            }.get(key)(args)
+    for key in [modifier, reader, selector, writer]:
+        if key:
+            switch_function(key)
     print("Please specify a flag as a command line argument.")
     print('See "python cooking.py -h" for additional information.')
-    return None
+
+
+def switch_function(key: str) -> ():
+    """
+    Reads parsed command line flag and runs corresponding workflow
+
+    Parameters
+    ----------
+    key:
+    - modifier
+    - reader
+    - selector
+    - writer
+
+    Returns
+    -------
+    Call to function
+    - cook_functions.func_modifier()
+    - cook_functions.func_reader()
+    - cook_functions.func_selector()
+    - cook_functions.func_writer()
+    """
+    return {
+        "modifier": cook_functions.func_modifier,
+        "reader": cook_functions.func_reader,
+        "selector": cook_functions.func_selector,
+        "writer": cook_functions.func_writer,
+    }.get(key)()
 
 
 @click.command()
 @click.option(
-    "-r",
-    "--reader",
-    default=False,
-    flag_value=True,
-    help="create cooking plan using dishes.yaml",
+    "-m",
+    "--modifier",
+    default=None,
+    flag_value="modifier",
+    help="modify all recipies in the persistent database by the same name as in a specified "
+    "yaml file",
 )
 @click.option(
-    "-w",
-    "--writer",
-    default=False,
-    flag_value=True,
-    help="write recipies from dishes.yaml to the persistent database",
+    "-r",
+    "--reader",
+    default=None,
+    flag_value="reader",
+    help="create cooking plan using dishes.yaml",
 )
 @click.option(
     "-s",
     "--selector",
-    default=False,
-    flag_value=True,
+    default=None,
+    flag_value="selector",
     help="create cooking plan using recipies existing in the persistent database",
 )
 @click.option(
-    "-m",
-    "--modifier",
-    default=False,
-    flag_value=True,
-    help="modify all recipies in the persistent database by the same name as in a specified "
-    "yaml file",
+    "-w",
+    "--writer",
+    default=None,
+    flag_value="writer",
+    help="write recipies from dishes.yaml to the persistent database",
 )
-def main(reader, writer, selector, modifier):
+def main(modifier, reader, selector, writer):
     """
     Reads command line arguments and begins workflow
     """
-    parse_arguments(reader, writer, selector, modifier)
+    parse_arguments(modifier=modifier, reader=reader, selector=selector, writer=writer)
 
 
 if __name__ == "__main__":
